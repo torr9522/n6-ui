@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-card title="N5 Xray 配置历史">
+                <a-row :gutter="12" style="margin-bottom: 12px;">
+                    <a-col :xs="24" :sm="8" :md="6">
+                        <a-input-number v-model="limit" :min="1" :max="200" style="width: 100%"></a-input-number>
+                    </a-col>
+                    <a-col :xs="24" :sm="8" :md="6">
+                        <a-button type="primary" @click="loadHistory">刷新</a-button>
+                    </a-col>
+                </a-row>
+                <a-table :data-source="records" :pagination="false" :row-key="row => row.id">
+                    <a-table-column title="时间">
+                        <template slot-scope="text, row">[[ formatTime(row.createdAt) ]]</template>
+                    </a-table-column>
+                    <a-table-column title="状态">
+                        <template slot-scope="text, row">
+                            <a-tag :color="statusColor(row.applyStatus)">[[ row.applyStatus || '-' ]]</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="Hash">
+                        <template slot-scope="text, row">
+                            <span style="word-break: break-all;">[[ row.configHash || '-' ]]</span>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="Error">
+                        <template slot-scope="text, row">
+                            <span style="word-break: break-all;">[[ row.applyError || '-' ]]</span>
+                        </template>
+                    </a-table-column>
+                </a-table>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            limit: 50,
+            records: [],
+        },
+        methods: {
+            async loadHistory() {
+                const msg = await HttpUtil.post('/n5/api/xray/history/list', {
+                    limit: this.limit,
+                });
+                if (msg.success) {
+                    this.records = msg.obj || [];
+                }
+            },
+            statusColor(status) {
+                switch (status) {
+                    case 'applied':
+                        return 'green';
+                    case 'validated':
+                        return 'blue';
+                    case 'generated':
+                        return 'gold';
+                    case 'failed':
+                        return 'red';
+                    default:
+                        return 'default';
+                }
+            },
+            formatTime(value) {
+                if (!value) {
+                    return '-';
+                }
+                return DateUtil.formatMillis(value);
+            },
+        },
+        async mounted() {
+            await this.loadHistory();
+        },
+    });
+</script>
+</body>
+</html>

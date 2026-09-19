@@ -1,0 +1,200 @@
+{{define "inboundModal"}}
+<a-modal id="inbound-modal" v-model="inModal.visible" :title="inModal.title" @ok="inModal.ok"
+         :confirm-loading="inModal.confirmLoading" :closable="true" :mask-closable="false"
+         :ok-text="inModal.okText" cancel-text='{{ i18n "close" }}'>
+    {{template "form/inbound"}}
+</a-modal>
+<script>
+
+    const inModal = {
+        title: '',
+        visible: false,
+        confirmLoading: false,
+        okText: '确定',
+        confirm: null,
+        inbound: new Inbound(),
+        dbInbound: new DBInbound(),
+        ok() {
+            const error = inModal.inbound.validateBasic();
+            if (!ObjectUtil.isEmpty(error)) {
+                Vue.prototype.$message.error(error);
+                return;
+            }
+            ObjectUtil.execute(inModal.confirm, inModal.inbound, inModal.dbInbound);
+        },
+        show({ title='', okText='确定', inbound=null, dbInbound=null, confirm=(inbound, dbInbound)=>{} }) {
+            this.title = title;
+            this.okText = okText;
+            if (inbound) {
+                this.inbound = Inbound.fromJson(inbound.toJson());
+            } else {
+                this.inbound = new Inbound();
+            }
+            if (dbInbound) {
+                this.dbInbound = new DBInbound(dbInbound);
+            } else {
+                this.dbInbound = new DBInbound();
+            }
+            this.confirm = confirm;
+            this.visible = true;
+            certificateStore.load(true);
+        },
+        close() {
+            inModal.visible = false;
+            inModal.loading(false);
+        },
+        loading(loading) {
+            inModal.confirmLoading = loading;
+        },
+    };
+
+    const protocols = {
+        VMESS: Protocols.VMESS,
+        VLESS: Protocols.VLESS,
+        TROJAN: Protocols.TROJAN,
+        SHADOWSOCKS: Protocols.SHADOWSOCKS,
+        DOKODEMO: Protocols.DOKODEMO,
+        SOCKS: Protocols.SOCKS,
+        HTTP: Protocols.HTTP,
+        MIXED: Protocols.MIXED,
+        TUNNEL: Protocols.TUNNEL,
+    };
+
+    new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#inbound-modal',
+        data: {
+            inModal: inModal,
+            Protocols: protocols,
+            SSMethods: SSMethods,
+            SSLegacyMethods: SSLegacyMethods,
+            SS2022Methods: SS2022Methods,
+            ShadowsocksCredential: ShadowsocksCredential,
+            certificateStore: certificateStore,
+            shadowsocksKeyGenerating: false,
+            realityKeyGenerating: false,
+            realityConfigGenerating: false,
+            realityConfigTemplate: 'cloudflare',
+            get inbound() {
+                return inModal.inbound;
+            },
+            get dbInbound() {
+                return inModal.dbInbound;
+            },
+            get protocolOptions() {
+                if (inModal.inbound && inModal.inbound.protocol === Protocols.TROJAN) {
+                    return {
+                        ...protocols,
+                        TROJAN: Protocols.TROJAN,
+                    };
+                }
+                return protocols;
+            }
+        },
+        methods: {
+            async shadowsocksMethodChange(method) {
+                if (!ShadowsocksCredential.is2022(method)) {
+                    return;
+                }
+                if (ShadowsocksCredential.isValid2022Key(method, this.inbound.settings.password)) {
+                    return;
+                }
+                await this.generateShadowsocksKey();
+            },
+            async generateShadowsocksKey() {
+                const method = this.inbound.settings.method;
+                if (!ShadowsocksCredential.is2022(method)) {
+                    return;
+                }
+                this.shadowsocksKeyGenerating = true;
+                try {
+                    const msg = await HttpUtil.post('/xui/inbound/shadowsocks/key', { method });
+                    if (msg.success && msg.obj && msg.obj.password) {
+                        this.inbound.settings.password = msg.obj.password;
+                    }
+                } finally {
+                    this.shadowsocksKeyGenerating = false;
+                }
+            },
+            tlsChange(checked) {
+                if (checked) {
+                    certificateStore.load(true);
+                }
+            },
+            selectTlsCertificate(value) {
+                const cert = certificateStore.findByValue(value);
+                if (!cert) {
+                    return;
+                }
+                this.inbound.stream.tls.server = cert.domain;
+                this.inbound.stream.tls.certs[0].useFile = true;
+                this.inbound.stream.tls.certs[0].certFile = cert.certFile;
+                this.inbound.stream.tls.certs[0].keyFile = cert.keyFile;
+            },
+            vlessSecurityChange(security) {
+                if (security === 'tls') {
+                    certificateStore.load(true);
+                }
+                if (security === 'reality') {
+                    if (!this.inbound.canEnableReality()) {
+                        this.inbound.stream.network = 'tcp';
+                    }
+                    if (ObjectUtil.isEmpty(this.inbound.settings.vlesses[0].flow)) {
+                        this.inbound.settings.vlesses[0].flow = FLOW_CONTROL.VISION;
+                    }
+                    if (ObjectUtil.isEmpty(this.inbound.stream.reality.spiderX)) {
+                        this.inbound.stream.reality.spiderX = '/';
+                    }
+                } else if (this.inbound.settings.vlesses[0].flow === FLOW_CONTROL.VISION) {
+                    this.inbound.settings.vlesses[0].flow = '';
+                }
+            },
+            async generateRealityKeyPair() {
+                this.realityKeyGenerating = true;
+                try {
+                    const msg = await HttpUtil.post('/xui/reality/x25519');
+                    if (!msg.success) {
+                        return;
+                    }
+                    this.inbound.stream.reality.privateKey = msg.obj.privateKey;
+                    this.inbound.stream.reality.publicKey = msg.obj.publicKey;
+                } finally {
+                    this.realityKeyGenerating = false;
+                }
+            },
+            async generateRealityConfig() {
+                this.realityConfigGenerating = true;
+                try {
+                    const template = this.realityConfigTemplate || 'cloudflare';
+                    const msg = await HttpUtil.post(`/xui/reality/default?template=${encodeURIComponent(template)}`);
+                    if (!msg.success) {
+                        return;
+                    }
+                    const reality = msg.obj;
+                    if (template !== 'custom') {
+                        this.inbound.stream.reality.dest = reality.dest;
+                        this.inbound.stream.reality.serverNames = reality.serverNames;
+                        this.inbound.stream.reality.fingerprint = reality.fingerprint;
+                        this.inbound.stream.reality.spiderX = reality.spiderX;
+                    }
+                    this.inbound.stream.reality.shortIds = reality.shortIds;
+                    this.inbound.stream.reality.privateKey = reality.privateKey;
+                    this.inbound.stream.reality.publicKey = reality.publicKey;
+                } finally {
+                    this.realityConfigGenerating = false;
+                }
+            },
+            streamNetworkChange(value) {
+                if (this.inbound.reality && !this.inbound.canEnableReality()) {
+                    this.inbound.stream.network = 'tcp';
+                    return;
+                }
+                if (value === 'kcp') {
+                    this.inModal.inbound.tls = false;
+                }
+            }
+        }
+    });
+
+</script>
+{{end}}

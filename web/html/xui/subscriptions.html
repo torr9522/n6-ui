@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<style>
+    @media (min-width: 769px) {
+        .ant-layout-content {
+            margin: 24px 16px;
+        }
+    }
+
+    .subscription-card {
+        border: 1px solid #f0f0f0;
+        border-radius: 10px;
+        padding: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        height: 100%;
+    }
+
+    .subscription-card:hover {
+        border-color: #1890ff;
+        box-shadow: 0 4px 16px rgba(24, 144, 255, 0.08);
+    }
+
+    .subscription-card.selected {
+        border-color: #1890ff;
+        background: #f0f7ff;
+    }
+
+    .subscription-card-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+
+    .subscription-card-meta {
+        color: rgba(0, 0, 0, 0.45);
+        font-size: 12px;
+        line-height: 1.7;
+        word-break: break-all;
+    }
+
+    .subscription-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .subscription-url-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+</style>
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content>
+            <a-spin :spinning="spinning" :delay="300" tip="loading">
+                <transition name="list" appear>
+                    <a-card hoverable style="margin-bottom: 20px;">
+                        <div class="subscription-toolbar">
+                            <div>
+                                <a-button type="primary" icon="plus" @click="openCreate()">新建订阅</a-button>
+                                <a-button style="margin-left: 8px;" icon="reload" @click="loadAll()">刷新</a-button>
+                            </div>
+                            <div>
+                                已配置订阅
+                                <a-tag color="blue">[[ subscriptions.length ]]</a-tag>
+                                已加载可选节点
+                                <a-tag color="green">[[ availableInbounds.length ]]</a-tag>
+                            </div>
+                        </div>
+                    </a-card>
+                </transition>
+
+                <transition name="list" appear>
+                    <a-card hoverable>
+                        <a-table :columns="columns"
+                                 :row-key="item => item.id"
+                                 :data-source="subscriptions"
+                                 :pagination="false"
+                                 :scroll="{ x: 1100 }">
+                            <template slot="status" slot-scope="text, item">
+                                <a-switch :checked="item.enable" @change="checked => updateEnable(item, checked)"></a-switch>
+                            </template>
+                            <template slot="nodeCount" slot-scope="text, item">
+                                <a-tag color="green">[[ item.inboundIds.length ]]</a-tag>
+                            </template>
+                            <template slot="base64Url" slot-scope="text, item">
+                                <div class="subscription-url-actions">
+                                    <a-button size="small" @click="copyUrl(item, 'base64')">复制</a-button>
+                                    <a-button size="small" @click="showQRCode(item, 'base64')">二维码</a-button>
+                                </div>
+                            </template>
+                            <template slot="clashUrl" slot-scope="text, item">
+                                <div class="subscription-url-actions">
+                                    <a-button size="small" @click="copyUrl(item, 'clash')">Clash</a-button>
+                                    <a-button size="small" @click="copyUrl(item, 'mihomo')">Mihomo</a-button>
+                                </div>
+                            </template>
+                            <template slot="updatedAt" slot-scope="text, item">
+                                <a-tag color="geekblue">[[ formatTime(item.updatedAt) ]]</a-tag>
+                            </template>
+                            <template slot="action" slot-scope="text, item">
+                                <a-dropdown :trigger="['click']">
+                                    <a @click="e => e.preventDefault()">操作</a>
+                                    <a-menu slot="overlay" @click="a => handleAction(a, item)">
+                                        <a-menu-item key="edit">
+                                            <a-icon type="edit"></a-icon>编辑
+                                        </a-menu-item>
+                                        <a-menu-item key="refresh">
+                                            <a-icon type="reload"></a-icon>刷新 Token
+                                        </a-menu-item>
+                                        <a-menu-item key="copyBase64">
+                                            <a-icon type="copy"></a-icon>复制 Base64 URL
+                                        </a-menu-item>
+                                        <a-menu-item key="copyClash">
+                                            <a-icon type="copy"></a-icon>复制 Clash URL
+                                        </a-menu-item>
+                                        <a-menu-item key="qrcodeClash">
+                                            <a-icon type="qrcode"></a-icon>Clash 二维码
+                                        </a-menu-item>
+                                        <a-menu-item key="copyMihomo">
+                                            <a-icon type="copy"></a-icon>复制 Mihomo URL
+                                        </a-menu-item>
+                                        <a-menu-item key="qrcodeMihomo">
+                                            <a-icon type="qrcode"></a-icon>Mihomo 二维码
+                                        </a-menu-item>
+                                        <a-menu-item key="qrcode">
+                                            <a-icon type="qrcode"></a-icon>二维码
+                                        </a-menu-item>
+                                        <a-menu-item key="delete">
+                                            <span style="color: #ff4d4f;">
+                                                <a-icon type="delete"></a-icon>删除
+                                            </span>
+                                        </a-menu-item>
+                                    </a-menu>
+                                </a-dropdown>
+                            </template>
+                        </a-table>
+                    </a-card>
+                </transition>
+            </a-spin>
+
+            <a-modal v-model="form.visible"
+                     :title="form.editing ? '编辑订阅' : '新建订阅'"
+                     :mask-closable="false"
+                     :confirm-loading="form.submitting"
+                     ok-text="保存"
+                     cancel-text="取消"
+                     :width="form.modalWidth"
+                     @ok="submitForm()">
+                <a-form layout="vertical">
+                    <a-row :gutter="16">
+                        <a-col :xs="24" :md="16">
+                            <a-form-item label="备注">
+                                <a-input v-model.trim="form.remark" placeholder="例如：我的日常订阅"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :md="8">
+                            <a-form-item label="启用">
+                                <a-switch v-model="form.enable"></a-switch>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <div class="subscription-toolbar" style="margin-bottom: 12px;">
+                        <div>
+                            <a-button size="small" @click="selectAllInbounds()">全选</a-button>
+                            <a-button size="small" style="margin-left: 8px;" @click="clearSelectedInbounds()">清空</a-button>
+                        </div>
+                        <div>已选择 <a-tag color="blue">[[ form.inboundIds.length ]]</a-tag> 个节点</div>
+                    </div>
+
+                    <a-row :gutter="[12, 12]">
+                        <a-col v-for="item in availableInbounds"
+                               :key="item.id"
+                               :xs="24"
+                               :md="12">
+                            <div class="subscription-card"
+                                 :class="{ selected: isInboundSelected(item.id) }"
+                                 @click="toggleInbound(item.id)">
+                                <div class="subscription-card-title">
+                                    <strong>[[ item.remark || ('Inbound #' + item.id) ]]</strong>
+                                    <a-tag color="blue">[[ item.protocol ]]</a-tag>
+                                </div>
+                                <div class="subscription-card-meta">
+                                    <div>安全：[[ inboundSecurity(item) ]]</div>
+                                    <div>端口：[[ item.port ]]</div>
+                                    <div>tag：[[ item.tag || '-' ]]</div>
+                                </div>
+                            </div>
+                        </a-col>
+                    </a-row>
+                </a-form>
+            </a-modal>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const columns = [{
+        title: "备注",
+        dataIndex: "remark",
+        width: 180,
+    }, {
+        title: "状态",
+        align: "center",
+        width: 90,
+        scopedSlots: { customRender: 'status' },
+    }, {
+        title: "节点数量",
+        align: "center",
+        width: 100,
+        scopedSlots: { customRender: 'nodeCount' },
+    }, {
+        title: "Base64",
+        align: "center",
+        width: 140,
+        scopedSlots: { customRender: 'base64Url' },
+    }, {
+        title: "Clash / Mihomo",
+        align: "center",
+        width: 160,
+        scopedSlots: { customRender: 'clashUrl' },
+    }, {
+        title: "更新时间",
+        align: "center",
+        width: 180,
+        scopedSlots: { customRender: 'updatedAt' },
+    }, {
+        title: "操作",
+        align: "center",
+        width: 120,
+        scopedSlots: { customRender: 'action' },
+    }];
+
+    async function copyText(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        try {
+            document.execCommand('copy');
+        } finally {
+            document.body.removeChild(textarea);
+        }
+    }
+
+    const app = new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#app',
+        data: {
+            siderDrawer,
+            spinning: false,
+            subscriptions: [],
+            availableInbounds: [],
+            form: {
+                visible: false,
+                editing: false,
+                submitting: false,
+                id: 0,
+                remark: '',
+                enable: true,
+                inboundIds: [],
+                modalWidth: window.innerWidth < 768 ? 'calc(100vw - 24px)' : '920px',
+            },
+        },
+        methods: {
+            loading(spinning=true) {
+                this.spinning = spinning;
+            },
+            async loadAll() {
+                this.loading(true);
+                await Promise.all([this.loadSubscriptions(), this.loadInbounds()]);
+                this.loading(false);
+            },
+            async loadSubscriptions() {
+                const msg = await HttpUtil.post('/xui/subscription/list');
+                if (!msg.success) {
+                    return;
+                }
+                this.subscriptions = msg.obj || [];
+            },
+            async loadInbounds() {
+                const msg = await HttpUtil.post('/xui/subscription/inbounds');
+                if (!msg.success) {
+                    return;
+                }
+                this.availableInbounds = msg.obj || [];
+            },
+            formatTime(ts) {
+                return ts ? DateUtil.formatMillis(ts) : '-';
+            },
+            buildSubscriptionUrl(item, format='base64') {
+                const url = new URL(`sub/${item.token}`, window.location.origin + basePath);
+                if (format !== 'base64') {
+                    url.searchParams.set('format', format);
+                }
+                return url.toString();
+            },
+            async copyUrl(item, format) {
+                const url = this.buildSubscriptionUrl(item, format);
+                await copyText(url);
+                this.$message.success('已复制');
+            },
+            showQRCode(item, format='base64') {
+                qrModal.show('订阅二维码', this.buildSubscriptionUrl(item, format));
+            },
+            inboundSecurity(item) {
+                try {
+                    const stream = item.streamSettings ? JSON.parse(item.streamSettings) : {};
+                    return stream.security || 'none';
+                } catch (e) {
+                    return 'unknown';
+                }
+            },
+            resetForm() {
+                this.form.visible = false;
+                this.form.editing = false;
+                this.form.submitting = false;
+                this.form.id = 0;
+                this.form.remark = '';
+                this.form.enable = true;
+                this.form.inboundIds = [];
+            },
+            openCreate() {
+                this.resetForm();
+                this.form.visible = true;
+            },
+            openEdit(item) {
+                this.form.visible = true;
+                this.form.editing = true;
+                this.form.id = item.id;
+                this.form.remark = item.remark || '';
+                this.form.enable = !!item.enable;
+                this.form.inboundIds = (item.inboundIds || []).slice();
+            },
+            isInboundSelected(id) {
+                return this.form.inboundIds.includes(id);
+            },
+            toggleInbound(id) {
+                if (this.isInboundSelected(id)) {
+                    this.form.inboundIds = this.form.inboundIds.filter(item => item !== id);
+                    return;
+                }
+                this.form.inboundIds = this.form.inboundIds.concat(id);
+            },
+            selectAllInbounds() {
+                this.form.inboundIds = this.availableInbounds.map(item => item.id);
+            },
+            clearSelectedInbounds() {
+                this.form.inboundIds = [];
+            },
+            async submitForm() {
+                if (ObjectUtil.isEmpty(this.form.remark)) {
+                    this.$message.error('请输入备注');
+                    return;
+                }
+                if (this.form.inboundIds.length === 0) {
+                    this.$message.error('请至少选择一个入站');
+                    return;
+                }
+                this.form.submitting = true;
+                const payload = {
+                    remark: this.form.remark,
+                    enable: this.form.enable,
+                    inboundIds: this.form.inboundIds,
+                };
+                const url = this.form.editing
+                    ? `/xui/subscription/update/${this.form.id}`
+                    : '/xui/subscription/add';
+                const msg = await HttpUtil.post(url, payload);
+                this.form.submitting = false;
+                if (!msg.success) {
+                    return;
+                }
+                this.resetForm();
+                await this.loadSubscriptions();
+            },
+            async updateEnable(item, checked) {
+                const payload = {
+                    remark: item.remark,
+                    enable: checked,
+                    inboundIds: item.inboundIds || [],
+                };
+                const msg = await HttpUtil.post(`/xui/subscription/update/${item.id}`, payload);
+                if (!msg.success) {
+                    await this.loadSubscriptions();
+                    return;
+                }
+                item.enable = checked;
+                item.updatedAt = Date.now();
+            },
+            async deleteItem(item) {
+                await new Promise(resolve => {
+                    this.$confirm({
+                        title: '删除订阅',
+                        content: `确认删除 ${item.remark} 吗？`,
+                        okText: '删除',
+                        cancelText: '取消',
+                        onOk: () => resolve(),
+                    });
+                });
+                const msg = await HttpUtil.post(`/xui/subscription/del/${item.id}`);
+                if (!msg.success) {
+                    return;
+                }
+                await this.loadSubscriptions();
+            },
+            async refreshToken(item) {
+                const msg = await HttpUtil.post(`/xui/subscription/refresh-token/${item.id}`);
+                if (!msg.success) {
+                    return;
+                }
+                await this.loadSubscriptions();
+            },
+            handleAction(action, item) {
+                switch (action.key) {
+                    case 'edit':
+                        this.openEdit(item);
+                        break;
+                    case 'refresh':
+                        this.refreshToken(item);
+                        break;
+                    case 'copyBase64':
+                        this.copyUrl(item, 'base64');
+                        break;
+                    case 'copyClash':
+                        this.copyUrl(item, 'clash');
+                        break;
+                    case 'qrcodeClash':
+                        this.showQRCode(item, 'clash');
+                        break;
+                    case 'copyMihomo':
+                        this.copyUrl(item, 'mihomo');
+                        break;
+                    case 'qrcodeMihomo':
+                        this.showQRCode(item, 'mihomo');
+                        break;
+                    case 'qrcode':
+                        this.showQRCode(item, 'base64');
+                        break;
+                    case 'delete':
+                        this.deleteItem(item);
+                        break;
+                }
+            },
+            updateModalWidth() {
+                this.form.modalWidth = window.innerWidth < 768 ? 'calc(100vw - 24px)' : '920px';
+            },
+        },
+        async mounted() {
+            window.addEventListener('resize', this.updateModalWidth);
+            await this.loadAll();
+        },
+        beforeDestroy() {
+            window.removeEventListener('resize', this.updateModalWidth);
+        },
+    });
+</script>
+{{template "qrcodeModal"}}
+</body>
+</html>

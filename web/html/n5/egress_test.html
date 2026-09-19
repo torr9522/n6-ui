@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-card title="出口测试入口">
+                <a-alert
+                    type="info"
+                    show-icon
+                    message="当前版本支持手动出口测试"
+                    description="请从出口线路列表点击“测试”按钮触发。测试会临时拉起独立 xray 子进程，完成 TCP 连通性和 HTTP 出口 IP 检测后立即销毁，不影响主运行链路。">
+                </a-alert>
+
+                <a-descriptions bordered :column="1" size="small" style="margin-top: 16px;">
+                    <a-descriptions-item label="Mode">[[ entry.mode || '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="Supported">[[ entry.supported ? 'true' : 'false' ]]</a-descriptions-item>
+                    <a-descriptions-item label="Description">[[ entry.description || '-' ]]</a-descriptions-item>
+                </a-descriptions>
+            </a-card>
+
+            <a-card title="预留输入" style="margin-top: 16px;">
+                <a-tag v-for="item in entry.inputs || []" :key="item" color="blue" style="margin-bottom: 8px;">[[ item ]]</a-tag>
+            </a-card>
+
+            <a-card title="预留输出" style="margin-top: 16px;">
+                <a-tag v-for="item in entry.outputs || []" :key="item" color="green" style="margin-bottom: 8px;">[[ item ]]</a-tag>
+            </a-card>
+
+            <a-card title="后续接入原则" style="margin-top: 16px;">
+                <a-list size="small" bordered :data-source="rules">
+                    <a-list-item slot="renderItem" slot-scope="item">[[ item ]]</a-list-item>
+                </a-list>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            entry: {
+                supported: false,
+                planned: true,
+                mode: '',
+                description: '',
+                inputs: [],
+                outputs: [],
+            },
+            rules: [
+                '测试逻辑必须独立 service，不直接接入旧 xray 运行链路。',
+                '测试配置必须临时生成并在完成后销毁，不覆盖主 config.json。',
+                '测试结果应记录到独立表或独立审计结构，不污染主配置历史。',
+                '失败测试不得触发主服务重启。',
+            ],
+        },
+        methods: {
+            async loadEntry() {
+                const msg = await HttpUtil.post('/n5/api/xray/egress-test/entry');
+                if (msg.success) {
+                    this.entry = msg.obj || this.entry;
+                }
+            },
+        },
+        async mounted() {
+            await this.loadEntry();
+        },
+    });
+</script>
+</body>
+</html>

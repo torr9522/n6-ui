@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-card title="N5 分流状态" style="margin-bottom: 16px;">
+                <a-row type="flex" justify="space-between" align="middle">
+                    <a-col>
+                        <a-tag :color="n5Enabled ? 'green' : 'default'">
+                            [[ n5Enabled ? 'enabled' : 'disabled' ]]
+                        </a-tag>
+                        <span style="color: rgba(0, 0, 0, 0.45);">
+                            当前状态由 N5设置中的“启用 N5 Xray 扩展”控制。
+                        </span>
+                    </a-col>
+                    <a-col>
+                        <a-button type="primary" @click="openN5Settings">
+                            打开 N5设置
+                        </a-button>
+                    </a-col>
+                </a-row>
+            </a-card>
+            <a-card title="添加出口规则">
+                <a-alert
+                    type="info"
+                    show-icon
+                    style="margin-bottom: 16px;"
+                    message="规则优先级：自定义域名 > 自定义规则组 > 内置分流 > 全部流量。自定义域名中，精确域名优先于域名及子域名，域名及子域名优先于域名关键词。">
+                </a-alert>
+                <a-form layout="vertical">
+                    <a-row :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="入口节点">
+                                <a-select v-model="form.inboundId" style="width: 100%">
+                                    <a-select-option v-for="item in inbounds" :key="item.id" :value="item.id">
+                                        [[ item.name ]]
+                                    </a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="流量类型">
+                                <a-select v-model="form.trafficType" style="width: 100%" :disabled="!!editingRuleId">
+                                    <a-select-option v-for="item in trafficTypes" :key="item.value" :value="item.value">
+                                        [[ item.label ]]
+                                    </a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="出口">
+                                <a-select v-model="form.egressId" style="width: 100%">
+                                    <a-select-option v-for="item in egresses" :key="item.id" :value="item.id">
+                                        [[ item.name ]]
+                                    </a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+                    <a-row :gutter="12" v-if="form.trafficType === 'group'">
+                        <a-col :xs="24" :sm="16">
+                            <a-form-item label="规则组名称">
+                                <a-select v-model="form.groupId" style="width: 100%" placeholder="选择规则组名称" :disabled="!!editingRuleId">
+                                    <a-select-option v-for="item in customGroups" :key="item.id" :value="item.id">
+                                        [[ item.name ]] ([[ item.ruleCount ]])
+                                    </a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8" style="display:flex;align-items:center;">
+                            <a-button style="margin-top: 6px" @click="openTrafficRules">管理规则组</a-button>
+                        </a-col>
+                    </a-row>
+                    <a-row :gutter="12" v-if="form.trafficType === 'custom-domain'">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="匹配方式">
+                                <a-select v-model="form.customMatchMode" style="width: 100%">
+                                    <a-select-option value="suffix">域名及子域名</a-select-option>
+                                    <a-select-option value="exact">精确域名</a-select-option>
+                                    <a-select-option value="keyword">域名关键词</a-select-option>
+                                    <a-select-option value="regexp">正则表达式（高级）</a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="16">
+                            <a-form-item label="域名">
+                                <a-input v-model.trim="form.customDomain" placeholder="example.com"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24">
+                            <a-alert type="info" show-icon :message="matchModeHelp(form.customMatchMode)"></a-alert>
+                        </a-col>
+                    </a-row>
+                    <a-button v-if="!editingRuleId" type="primary" @click="createRule">添加</a-button>
+                    <a-button v-else type="primary" @click="updateRule">保存</a-button>
+                    <a-button style="margin-left: 8px" @click="resetForm">重置</a-button>
+                    <a-button v-if="editingRuleId" style="margin-left: 8px" @click="cancelEdit">取消编辑</a-button>
+                    <a-button style="margin-left: 8px" @click="openSimpleEgress">返回出口</a-button>
+                    <a-button style="margin-left: 8px" @click="openTrafficRules">分流规则</a-button>
+                </a-form>
+            </a-card>
+
+            <a-card title="规则列表" style="margin-top: 16px;">
+                <a-table :data-source="rules" :pagination="false" :row-key="row => row.ruleId || row.id">
+                    <a-table-column title="入口">
+                        <template slot-scope="text, row">
+                            [[ row.inboundName ]]
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="流量类型">
+                        <template slot-scope="text, row">
+                            <span>[[ row.trafficLabel ]]</span>
+                            <div v-if="row.groupName" style="color: rgba(0, 0, 0, 0.45); font-size: 12px;">
+                                [[ ruleGroupPrefix(row) ]]：[[ row.groupName ]]
+                            </div>
+                            <div v-if="row.customDomain" style="color: rgba(0, 0, 0, 0.45); font-size: 12px;">
+                                [[ customDomainLabel(row.customDomain) ]]：[[ customDomainValue(row.customDomain) ]]
+                            </div>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="来源">
+                        <template slot-scope="text, row">
+                            <span v-if="row.trafficType === 'group'">[[ row.groupName || ruleGroupName(row.groupId) || '未命名规则组' ]]</span>
+                            <span v-else-if="row.trafficType === 'custom-domain'">自定义</span>
+                            <span v-else>[[ row.trafficLabel ]]</span>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="出口">
+                        <template slot-scope="text, row">
+                            [[ row.egressName ]]
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="状态">
+                        <template slot-scope="text, row">
+                            <a-tag :color="row.enabled ? 'green' : 'default'">[[ row.status ]]</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="操作">
+                        <template slot-scope="text, row">
+                            <a-button size="small" style="margin-right: 8px" @click="startEdit(row)">编辑</a-button>
+                            <a-button size="small" type="danger" @click="deleteRule(row)">删除</a-button>
+                        </template>
+                    </a-table-column>
+                </a-table>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const defaultRuleForm = () => ({
+        ruleId: '',
+        inboundId: undefined,
+        trafficType: 'all',
+        groupId: undefined,
+        egressId: undefined,
+        customDomain: '',
+        customMatchMode: 'suffix',
+    });
+
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            rules: [],
+            inbounds: [],
+            egresses: [],
+            groups: [],
+            trafficTypes: [],
+            form: defaultRuleForm(),
+            editingRuleId: '',
+            n5Enabled: false,
+            n5StatusLoading: false,
+        },
+        computed: {
+            customGroups() {
+                return (this.groups || []).filter(item => item.groupType === 'custom');
+            },
+        },
+        methods: {
+            async loadN5Status() {
+                this.n5StatusLoading = true;
+                const msg = await HttpUtil.get('/n5/api/simple/rule/n5-status');
+                this.n5StatusLoading = false;
+                if (!msg.success || !msg.obj) {
+                    return;
+                }
+                this.n5Enabled = !!msg.obj.enabled;
+            },
+            async loadRules() {
+                const msg = await HttpUtil.get('/n5/api/simple/rule/list');
+                if (!msg.success || !msg.obj) {
+                    return;
+                }
+                this.rules = msg.obj.rules || [];
+                this.inbounds = msg.obj.inbounds || [];
+                this.egresses = msg.obj.egresses || [];
+                this.groups = msg.obj.groups || [];
+                this.trafficTypes = msg.obj.trafficTypes || [];
+                if (!this.form.inboundId && this.inbounds.length > 0) {
+                    this.form.inboundId = this.inbounds[0].id;
+                }
+                if (!this.form.egressId && this.egresses.length > 0) {
+                    this.form.egressId = this.egresses[0].id;
+                }
+                if (!this.form.groupId && this.customGroups.length > 0) {
+                    this.form.groupId = this.customGroups[0].id;
+                }
+            },
+            resetForm() {
+                this.form = defaultRuleForm();
+                this.editingRuleId = '';
+                if (this.inbounds.length > 0) {
+                    this.form.inboundId = this.inbounds[0].id;
+                }
+                if (this.egresses.length > 0) {
+                    this.form.egressId = this.egresses[0].id;
+                }
+                if (this.customGroups.length > 0) {
+                    this.form.groupId = this.customGroups[0].id;
+                }
+            },
+            cancelEdit() {
+                this.resetForm();
+            },
+            startEdit(row) {
+                this.editingRuleId = row.ruleId || '';
+                this.form = {
+                    ruleId: row.ruleId || '',
+                    inboundId: row.inboundId,
+                    trafficType: row.trafficType,
+                    groupId: row.groupId || undefined,
+                    egressId: row.egressId,
+                    customDomain: this.customDomainValue(row.customDomain || ''),
+                    customMatchMode: this.customDomainMode(row.customDomain || ''),
+                };
+            },
+            matchModeHelp(mode) {
+                if (mode === 'exact') {
+                    return '仅匹配当前完整域名。例如 example.com 只匹配 example.com，不会匹配 www.example.com 或 api.example.com。';
+                }
+                if (mode === 'keyword') {
+                    return '只要域名中包含该关键词即可匹配。例如 google 可匹配 google.com、googlevideo.com、accounts.google.com。';
+                }
+                if (mode === 'regexp') {
+                    return '使用正则表达式匹配域名，仅建议高级用户使用。';
+                }
+                return '匹配当前域名以及所有子域名。例如 example.com 会匹配 example.com、www.example.com、api.example.com。';
+            },
+            customDomainMode(value) {
+                if ((value || '').startsWith('full:')) {
+                    return 'exact';
+                }
+                if ((value || '').startsWith('keyword:')) {
+                    return 'keyword';
+                }
+                if ((value || '').startsWith('regexp:')) {
+                    return 'regexp';
+                }
+                return 'suffix';
+            },
+            customDomainValue(value) {
+                return (value || '').replace(/^(full|domain|keyword|regexp):/, '');
+            },
+            customDomainLabel(value) {
+                const labels = {
+                    exact: '精确域名',
+                    suffix: '域名及子域名',
+                    keyword: '域名关键词',
+                    regexp: '正则表达式',
+                };
+                return labels[this.customDomainMode(value)] || '域名及子域名';
+            },
+            customDomainPayload() {
+                const prefixes = {
+                    exact: 'full:',
+                    suffix: 'domain:',
+                    keyword: 'keyword:',
+                    regexp: 'regexp:',
+                };
+                return `${prefixes[this.form.customMatchMode] || 'domain:'}${this.form.customDomain}`;
+            },
+            ruleGroupPrefix(row) {
+                return row.groupType === 'custom' ? '自定义规则组' : '内置规则组';
+            },
+            ruleGroupName(groupId) {
+                const group = this.groups.find(item => item.id === groupId);
+                return group ? group.name : '';
+            },
+            buildSubmitPayload() {
+                const payload = Object.assign({}, this.form);
+                if (payload.trafficType === 'custom-domain') {
+                    payload.customDomain = this.customDomainPayload();
+                } else {
+                    payload.customDomain = '';
+                }
+                if (payload.trafficType !== 'group') {
+                    payload.groupId = 0;
+                }
+                return payload;
+            },
+            async confirmConflictIfNeeded(payload) {
+                if (!['custom-domain', 'group', 'ai', 'game', 'streaming'].includes(payload.trafficType)) {
+                    return true;
+                }
+                const checkPayload = Object.assign({}, payload, { ruleId: this.editingRuleId || '' });
+                const msg = await HttpUtil.post('/n5/api/simple/rule/conflicts', checkPayload);
+                if (!msg.success || !msg.obj || !msg.obj.hasConflict) {
+                    return msg.success;
+                }
+                return await new Promise((resolve) => {
+                    this.$confirm({
+                        title: '发现规则重叠',
+                        content: msg.obj.warning || '发现规则重叠，请确认保存后的优先级。',
+                        okText: '仍然保存',
+                        cancelText: '取消',
+                        onOk: () => resolve(true),
+                        onCancel: () => resolve(false),
+                    });
+                });
+            },
+            async createRule() {
+                if (this.editingRuleId) {
+                    return;
+                }
+                const payload = this.buildSubmitPayload();
+                if (!await this.confirmConflictIfNeeded(payload)) {
+                    return;
+                }
+                const msg = await HttpUtil.post('/n5/api/simple/rule/add', payload);
+                if (msg.success) {
+                    this.$message.success('规则已保存，等待自动应用');
+                    await this.loadRules();
+                    this.resetForm();
+                }
+            },
+            async updateRule() {
+                if (!this.editingRuleId) {
+                    return;
+                }
+                const payload = Object.assign(this.buildSubmitPayload(), { ruleId: this.editingRuleId });
+                if (!await this.confirmConflictIfNeeded(payload)) {
+                    return;
+                }
+                const msg = await HttpUtil.post('/n5/api/simple/rule/update', payload);
+                if (msg.success) {
+                    this.$message.success('规则已更新，等待自动应用');
+                    await this.loadRules();
+                    this.resetForm();
+                }
+            },
+            async deleteRule(row) {
+                const msg = await HttpUtil.post('/n5/api/simple/rule/delete', { ruleId: row.ruleId || '', id: row.id });
+                if (msg.success) {
+                    this.$message.success('规则已删除，等待自动应用');
+                    await this.loadRules();
+                }
+            },
+            async updateN5Status(enabled) {
+                this.n5StatusLoading = true;
+                const msg = await HttpUtil.post('/n5/api/simple/rule/n5-status', { enabled });
+                this.n5StatusLoading = false;
+                if (!msg.success) {
+                    return;
+                }
+                this.n5Enabled = !!(msg.obj && msg.obj.enabled);
+                this.$message.success('N5 分流状态已更新，等待自动应用');
+            },
+            openSimpleEgress() {
+                location.href = `${basePath}n5/simple`;
+            },
+            openN5Settings() {
+                location.href = `${basePath}n5/settings`;
+            },
+            openTrafficRules() {
+                location.href = `${basePath}n5/simple/traffic-rules`;
+            },
+        },
+        async mounted() {
+            await this.loadN5Status();
+            await this.loadRules();
+            this.resetForm();
+        },
+    });
+</script>
+</body>
+</html>

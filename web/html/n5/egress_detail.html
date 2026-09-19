@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-card title="基础信息">
+                <a-descriptions bordered :column="2" size="small">
+                    <a-descriptions-item label="名称">[[ detail.name || '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="协议">[[ detail.protocol || '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="地址">[[ detail.address || '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="Tag">[[ detail.tag || '-' ]]</a-descriptions-item>
+                </a-descriptions>
+            </a-card>
+
+            <a-card title="测试状态" style="margin-top: 16px;">
+                <a-descriptions bordered :column="3" size="small">
+                    <a-descriptions-item label="状态">
+                        <a-tag :color="statusColor(detail.lastStatus)">[[ formatStatus(detail.lastStatus) ]]</a-tag>
+                    </a-descriptions-item>
+                    <a-descriptions-item label="出口IP">[[ detail.lastExitIP || '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="最后测试时间">[[ formatTime(detail.lastTestTime) ]]</a-descriptions-item>
+                </a-descriptions>
+            </a-card>
+
+            <a-card title="标签" style="margin-top: 16px;">
+                <div style="margin-bottom: 12px;">
+                    <a-tag v-for="label in detail.labels" :key="label.id" closable @close.prevent="unbindLabel(label.id)">
+                        [[ label.name ]] / [[ label.type ]]
+                    </a-tag>
+                    <span v-if="!detail.labels || detail.labels.length === 0">暂无标签</span>
+                </div>
+                <a-row :gutter="12">
+                    <a-col :xs="24" :sm="10">
+                        <a-select v-model="selectedLabelId" style="width: 100%" placeholder="选择已有标签">
+                            <a-select-option v-for="label in allLabels" :key="label.id" :value="label.id">
+                                [[ label.name ]] / [[ label.type ]]
+                            </a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="6">
+                        <a-button type="primary" @click="bindLabel">绑定标签</a-button>
+                    </a-col>
+                </a-row>
+                <a-row :gutter="12" style="margin-top: 12px;">
+                    <a-col :xs="24" :sm="10">
+                        <a-input v-model.trim="newLabel.name" placeholder="新标签名称"></a-input>
+                    </a-col>
+                    <a-col :xs="24" :sm="6">
+                        <a-select v-model="newLabel.type" style="width: 100%">
+                            <a-select-option value="region">region</a-select-option>
+                            <a-select-option value="usage">usage</a-select-option>
+                            <a-select-option value="quality">quality</a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="8">
+                        <a-button @click="createAndBindLabel">创建并绑定</a-button>
+                    </a-col>
+                </a-row>
+            </a-card>
+
+            <a-card title="线路池" style="margin-top: 16px;">
+                <a-list size="small" bordered :data-source="detail.pools || []">
+                    <a-list-item slot="renderItem" slot-scope="item">
+                        [[ item.name ]] ([[ item.tag ]])
+                    </a-list-item>
+                </a-list>
+                <div v-if="!detail.pools || detail.pools.length === 0">暂无线路池引用</div>
+            </a-card>
+
+            <a-card title="关联策略" style="margin-top: 16px;">
+                <a-list size="small" bordered :data-source="detail.policies || []">
+                    <a-list-item slot="renderItem" slot-scope="item">
+                        [[ item.name ]] (# [[ item.id ]])
+                    </a-list-item>
+                </a-list>
+                <div v-if="!detail.policies || detail.policies.length === 0">暂无关联策略</div>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            egressId: 0,
+            selectedLabelId: undefined,
+            allLabels: [],
+            newLabel: {
+                name: '',
+                type: 'usage',
+            },
+            detail: {
+                id: 0,
+                name: '',
+                protocol: '',
+                address: '',
+                tag: '',
+                lastStatus: '',
+                lastExitIP: '',
+                lastTestTime: 0,
+                labels: [],
+                pools: [],
+                policies: [],
+            },
+        },
+        methods: {
+            formatStatus(status) {
+                return status || 'untested';
+            },
+            statusColor(status) {
+                if (status === 'success') {
+                    return 'green';
+                }
+                if (status === 'failed') {
+                    return 'red';
+                }
+                return 'default';
+            },
+            formatTime(value) {
+                if (!value) {
+                    return '-';
+                }
+                return DateUtil.formatMillis(value);
+            },
+            resolveEgressId() {
+                const id = parseInt(new URLSearchParams(location.search).get('id') || '0', 10);
+                this.egressId = id > 0 ? id : 0;
+            },
+            async loadDetail() {
+                if (!this.egressId) {
+                    return;
+                }
+                const msg = await HttpUtil.get(`/n5/api/egress/detail/${this.egressId}`);
+                if (msg.success) {
+                    this.detail = msg.obj || this.detail;
+                }
+            },
+            async loadLabels() {
+                const msg = await HttpUtil.get('/n5/api/egress-label/list');
+                if (msg.success) {
+                    this.allLabels = msg.obj || [];
+                }
+            },
+            async bindLabel() {
+                if (!this.egressId || !this.selectedLabelId) {
+                    this.$message.error('请选择标签');
+                    return;
+                }
+                const msg = await HttpUtil.post('/n5/api/egress-label/bind', {
+                    egressId: this.egressId,
+                    labelId: this.selectedLabelId,
+                });
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async unbindLabel(labelId) {
+                const msg = await HttpUtil.post('/n5/api/egress-label/unbind', {
+                    egressId: this.egressId,
+                    labelId,
+                });
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async createAndBindLabel() {
+                const msg = await HttpUtil.post('/n5/api/egress-label/add', this.newLabel);
+                if (!msg.success || !msg.obj) {
+                    return;
+                }
+                await HttpUtil.post('/n5/api/egress-label/bind', {
+                    egressId: this.egressId,
+                    labelId: msg.obj.id,
+                });
+                this.newLabel = { name: '', type: 'usage' };
+                await this.loadLabels();
+                await this.loadDetail();
+            },
+        },
+        async mounted() {
+            this.resolveEgressId();
+            await this.loadLabels();
+            await this.loadDetail();
+        },
+    });
+</script>
+</body>
+</html>

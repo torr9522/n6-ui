@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-card title="出口线路池">
+                <a-form layout="vertical">
+                    <a-row :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="名称">
+                                <a-input v-model.trim="poolForm.name"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="策略">
+                                <a-input v-model.trim="poolForm.strategy" placeholder="random / roundrobin"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="备注">
+                                <a-input v-model.trim="poolForm.remark"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+                    <a-button type="primary" @click="createPool">新增线路池</a-button>
+                </a-form>
+            </a-card>
+
+            <a-card title="添加成员" style="margin-top: 16px;">
+                <a-row :gutter="12">
+                    <a-col :xs="24" :sm="8">
+                        <a-select v-model="memberForm.poolId" style="width: 100%" placeholder="选择线路池">
+                            <a-select-option v-for="item in pools" :key="item.id" :value="item.id">[[ item.name ]]</a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="8">
+                        <a-select v-model="memberForm.egressId" style="width: 100%" placeholder="选择出口">
+                            <a-select-option v-for="item in egresses" :key="item.id" :value="item.id">[[ item.name ]]</a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="4">
+                        <a-input-number v-model="memberForm.weight" :min="1" style="width: 100%"></a-input-number>
+                    </a-col>
+                    <a-col :xs="24" :sm="4">
+                        <a-button type="primary" @click="addMember">添加成员</a-button>
+                    </a-col>
+                </a-row>
+            </a-card>
+
+            <a-card title="线路池列表" style="margin-top: 16px;">
+                <div v-for="pool in pools" :key="pool.id" style="margin-bottom: 20px;">
+                    <div style="font-weight: 600; margin-bottom: 8px;">[[ pool.name ]] ([[ pool.tag ]])</div>
+                    <a-table :data-source="members[pool.id] || []" :pagination="false" size="small" :row-key="row => row.id">
+                        <a-table-column title="EgressId" data-index="egressId"></a-table-column>
+                        <a-table-column title="Weight" data-index="weight"></a-table-column>
+                        <a-table-column title="Sort" data-index="sortOrder"></a-table-column>
+                        <a-table-column title="操作">
+                            <template slot-scope="text, row">
+                                <a-button size="small" type="danger" @click="deleteMember(pool.id, row.egressId)">删除</a-button>
+                            </template>
+                        </a-table-column>
+                    </a-table>
+                </div>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            egresses: [],
+            pools: [],
+            members: {},
+            poolForm: {
+                name: '',
+                strategy: 'random',
+                remark: '',
+                enabled: true,
+            },
+            memberForm: {
+                poolId: null,
+                egressId: null,
+                weight: 1,
+                sortOrder: 0,
+            },
+        },
+        methods: {
+            async loadEgresses() {
+                const msg = await HttpUtil.post('/n5/api/egress/list');
+                if (msg.success) {
+                    this.egresses = msg.obj || [];
+                }
+            },
+            async loadPools() {
+                const msg = await HttpUtil.post('/n5/api/pool/list');
+                if (msg.success) {
+                    this.pools = msg.obj || [];
+                    for (const item of this.pools) {
+                        await this.loadMembers(item.id);
+                    }
+                }
+            },
+            async loadMembers(poolId) {
+                const msg = await HttpUtil.post(`/n5/api/pool/member/list/${poolId}`);
+                if (msg.success) {
+                    this.$set(this.members, poolId, msg.obj || []);
+                }
+            },
+            async createPool() {
+                const msg = await HttpUtil.post('/n5/api/pool/add', this.poolForm);
+                if (msg.success) {
+                    this.poolForm = { name: '', strategy: 'random', remark: '', enabled: true };
+                    await this.loadPools();
+                }
+            },
+            async addMember() {
+                const msg = await HttpUtil.post('/n5/api/pool/member/add', this.memberForm);
+                if (msg.success) {
+                    await this.loadMembers(this.memberForm.poolId);
+                }
+            },
+            async deleteMember(poolId, egressId) {
+                const msg = await HttpUtil.post('/n5/api/pool/member/del', { poolId, egressId });
+                if (msg.success) {
+                    await this.loadMembers(poolId);
+                }
+            },
+        },
+        async mounted() {
+            await this.loadEgresses();
+            await this.loadPools();
+        },
+    });
+</script>
+</body>
+</html>

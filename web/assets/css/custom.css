@@ -1,0 +1,277 @@
+#app {
+    height: 100%;
+}
+
+.ant-space {
+    width: 100%;
+}
+
+.ant-layout-sider-zero-width-trigger {
+    display: none;
+}
+
+.n5-light-sidebar {
+    background: #fff !important;
+    box-shadow: 1px 0 0 rgba(17, 24, 39, 0.08);
+    min-height: 100vh;
+}
+
+.n5-light-sidebar .ant-layout-sider-children {
+    background: #fff;
+    min-height: 100vh;
+}
+
+.n5-sidebar-menu,
+.n5-sidebar-menu.ant-menu-light,
+.n5-light-sidebar-drawer .ant-drawer-body {
+    background: #fff;
+}
+
+.n5-sidebar-menu.ant-menu-inline,
+.n5-sidebar-menu .ant-menu-sub.ant-menu-inline {
+    border-right: 0;
+}
+
+.n5-sidebar-menu .ant-menu-item,
+.n5-sidebar-menu .ant-menu-submenu-title,
+.n5-sidebar-menu .ant-menu-item .anticon,
+.n5-sidebar-menu .ant-menu-submenu-title .anticon,
+.n5-sidebar-menu .ant-menu-submenu-arrow,
+.n5-sidebar-menu .ant-menu-submenu-arrow::before,
+.n5-sidebar-menu .ant-menu-submenu-arrow::after {
+    color: #1f2937 !important;
+}
+
+.n5-sidebar-menu .ant-menu-item:hover,
+.n5-sidebar-menu .ant-menu-submenu-title:hover {
+    color: #1d4ed8 !important;
+    background: #eff6ff !important;
+}
+
+.n5-sidebar-menu .ant-menu-item:hover .anticon,
+.n5-sidebar-menu .ant-menu-submenu-title:hover .anticon,
+.n5-sidebar-menu .ant-menu-submenu-title:hover .ant-menu-submenu-arrow,
+.n5-sidebar-menu .ant-menu-submenu-title:hover .ant-menu-submenu-arrow::before,
+.n5-sidebar-menu .ant-menu-submenu-title:hover .ant-menu-submenu-arrow::after {
+    color: #1d4ed8 !important;
+}
+
+.n5-sidebar-menu .ant-menu-item-selected,
+.n5-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title,
+.n5-sidebar-menu .ant-menu-item-selected:hover,
+.n5-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title:hover {
+    color: #fff !important;
+    background: #1890ff !important;
+}
+
+.n5-sidebar-menu .ant-menu-item-selected .anticon,
+.n5-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title .anticon,
+.n5-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-submenu-arrow,
+.n5-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-submenu-arrow::before,
+.n5-sidebar-menu .ant-menu-submenu-selected > .ant-menu-submenu-title .ant-menu-submenu-arrow::after {
+    color: #fff !important;
+}
+
+.n5-sidebar-menu .ant-menu-sub {
+    background: #fff !important;
+}
+
+.n5-light-sidebar-drawer .ant-drawer-content,
+.n5-light-sidebar-drawer .ant-drawer-wrapper-body,
+.n5-light-sidebar-drawer .ant-drawer-header,
+.n5-light-sidebar-drawer .ant-drawer-body {
+    background: #fff;
+}
+
+.ant-card {
+    border-radius: 30px;
+}
+
+.ant-card-hoverable {
+    cursor: auto;
+}
+
+.ant-card+.ant-card {
+    margin-top: 20px;
+}
+
+.drawer-handle {
+    position: absolute;
+    top: 72px;
+    width: 41px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 0;
+    text-align: center;
+    line-height: 40px;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    right: -40px;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+    border-radius: 0 4px 4px 0;
+}
+
+@media (min-width: 769px) {
+    .drawer-handle {
+        display: none;
+    }
+}
+
+.fade-in-enter, .fade-in-leave-active, .fade-in-linear-enter, .fade-in-linear-leave, .fade-in-linear-leave-active, .fade-in-linear-enter, .fade-in-linear-leave, .fade-in-linear-leave-active {
+    opacity: 0
+}
+
+.fade-in-linear-enter-active, .fade-in-linear-leave-active {
+    -webkit-transition: opacity .2s linear;
+    transition: opacity .2s linear
+}
+
+.fade-in-linear-enter-active, .fade-in-linear-leave-active {
+    -webkit-transition: opacity .2s linear;
+    transition: opacity .2s linear
+}
+
+.fade-in-enter-active, .fade-in-leave-active {
+    -webkit-transition: all .3s cubic-bezier(.55, 0, .1, 1);
+    transition: all .3s cubic-bezier(.55, 0, .1, 1)
+}
+
+.zoom-in-center-enter-active, .zoom-in-center-leave-active {
+    -webkit-transition: all .3s cubic-bezier(.55, 0, .1, 1);
+    transition: all .3s cubic-bezier(.55, 0, .1, 1)
+}
+
+.zoom-in-center-enter, .zoom-in-center-leave-active {
+    opacity: 0;
+    -webkit-transform: scaleX(0);
+    transform: scaleX(0)
+}
+
+.zoom-in-top-enter-active, .zoom-in-top-leave-active {
+    opacity: 1;
+    -webkit-transform: scaleY(1);
+    transform: scaleY(1);
+    -webkit-transition: opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    transition: opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    transition: transform .3s cubic-bezier(.23, 1, .32, 1), opacity .3s cubic-bezier(.23, 1, .32, 1);
+    transition: transform .3s cubic-bezier(.23, 1, .32, 1), opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    -webkit-transform-origin: center top;
+    transform-origin: center top
+}
+
+.zoom-in-top-enter, .zoom-in-top-leave-active {
+    opacity: 0;
+    -webkit-transform: scaleY(0);
+    transform: scaleY(0)
+}
+
+.zoom-in-bottom-enter-active, .zoom-in-bottom-leave-active {
+    opacity: 1;
+    -webkit-transform: scaleY(1);
+    transform: scaleY(1);
+    -webkit-transition: opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    transition: opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    transition: transform .3s cubic-bezier(.23, 1, .32, 1), opacity .3s cubic-bezier(.23, 1, .32, 1);
+    transition: transform .3s cubic-bezier(.23, 1, .32, 1), opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    -webkit-transform-origin: center bottom;
+    transform-origin: center bottom
+}
+
+.zoom-in-bottom-enter, .zoom-in-bottom-leave-active {
+    opacity: 0;
+    -webkit-transform: scaleY(0);
+    transform: scaleY(0)
+}
+
+.zoom-in-left-enter-active, .zoom-in-left-leave-active {
+    opacity: 1;
+    -webkit-transform: scale(1, 1);
+    transform: scale(1, 1);
+    -webkit-transition: opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    transition: opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    transition: transform .3s cubic-bezier(.23, 1, .32, 1), opacity .3s cubic-bezier(.23, 1, .32, 1);
+    transition: transform .3s cubic-bezier(.23, 1, .32, 1), opacity .3s cubic-bezier(.23, 1, .32, 1), -webkit-transform .3s cubic-bezier(.23, 1, .32, 1);
+    -webkit-transform-origin: top left;
+    transform-origin: top left
+}
+
+.zoom-in-left-enter, .zoom-in-left-leave-active {
+    opacity: 0;
+    -webkit-transform: scale(.45, .45);
+    transform: scale(.45, .45)
+}
+
+.list-enter-active, .list-leave-active {
+    -webkit-transition: all .3s;
+    transition: all .3s
+}
+
+.list-enter, .list-leave-active {
+    opacity: 0;
+    -webkit-transform: translateY(-30px);
+    transform: translateY(-30px)
+}
+
+.ant-progress-inner {
+    background-color: #EBEEF5;
+}
+
+@media (max-width: 768px) {
+    #content-layout .ant-layout-content {
+        margin: 16px 8px !important;
+    }
+
+    .ant-card-body {
+        padding: 12px;
+    }
+
+    .ant-table-wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .ant-table-wrapper .ant-table {
+        min-width: max-content;
+    }
+
+    .ant-table-thead > tr > th,
+    .ant-table-tbody > tr > td {
+        white-space: nowrap;
+    }
+
+    .ant-table-tbody > tr > td {
+        max-width: 240px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ant-table-tbody > tr > td:last-child,
+    .ant-table-thead > tr > th:last-child {
+        max-width: none;
+    }
+
+    .ant-modal {
+        max-width: calc(100vw - 16px);
+        margin: 8px auto;
+    }
+
+    .ant-modal-content {
+        max-height: calc(100vh - 16px);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ant-modal-body {
+        overflow: auto;
+    }
+
+    .ant-modal-footer {
+        flex-shrink: 0;
+    }
+}

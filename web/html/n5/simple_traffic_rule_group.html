@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-breadcrumb style="margin-bottom: 16px;">
+                <a-breadcrumb-item><a @click="backToGroups">分流规则</a></a-breadcrumb-item>
+                <a-breadcrumb-item>[[ group ? group.name : '管理规则' ]]</a-breadcrumb-item>
+            </a-breadcrumb>
+
+            <a-card v-if="group" title="规则组">
+                <a-row :gutter="12" type="flex" align="middle">
+                    <a-col :xs="24" :md="10">
+                        <a-form-item label="规则组名称">
+                            <a-input v-model.trim="group.name"></a-input>
+                        </a-form-item>
+                    </a-col>
+                    <a-col :xs="24" :md="6">
+                        <a-form-item label="状态">
+                            <a-tag :color="group.enabled ? 'green' : 'default'">[[ group.enabled ? '启用' : '停用' ]]</a-tag>
+                            <a-button size="small" style="margin-left: 8px" @click="toggleGroup">
+                                [[ group.enabled ? '停用' : '启用' ]]
+                            </a-button>
+                        </a-form-item>
+                    </a-col>
+                    <a-col :xs="24" :md="8" style="text-align: right;">
+                        <a-button @click="backToGroups">返回分流规则</a-button>
+                        <a-button type="primary" style="margin-left: 8px" @click="saveGroupName">保存名称</a-button>
+                    </a-col>
+                </a-row>
+            </a-card>
+
+            <a-card v-if="group" title="域名规则" style="margin-top: 16px;">
+                <div style="margin-bottom: 12px; text-align: right;">
+                    <a-button type="primary" @click="openAddRule">+ 添加域名规则</a-button>
+                </div>
+                <a-table :data-source="group.rules || []" :pagination="false" :row-key="row => row.id">
+                    <a-table-column title="匹配方式">
+                        <template slot-scope="text, row">
+                            <span>[[ matchModeLabel(row.matchMode) ]]</span>
+                            <a-tag v-if="row.matchMode === 'regexp'" color="orange" style="margin-left: 8px">高级</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="内容" data-index="matchValue"></a-table-column>
+                    <a-table-column title="状态">
+                        <template slot-scope="text, row">
+                            <a-tag :color="row.enabled ? 'green' : 'default'">[[ row.enabled ? '启用' : '停用' ]]</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="操作">
+                        <template slot-scope="text, row">
+                            <a-button size="small" @click="openEditRule(row)">编辑</a-button>
+                            <a-button size="small" type="danger" style="margin-left: 8px" @click="confirmDeleteRule(row)">删除</a-button>
+                        </template>
+                    </a-table-column>
+                </a-table>
+            </a-card>
+
+            <a-modal
+                :title="ruleModal.editingId ? '编辑域名规则' : '添加域名规则'"
+                :visible="ruleModal.visible"
+                @ok="saveRule"
+                @cancel="closeRuleModal"
+                :ok-text="ruleModal.editingId ? '保存' : '添加'"
+                cancel-text="取消">
+                <a-form layout="vertical">
+                    <a-form-item label="匹配方式">
+                        <a-select v-model="ruleModal.matchMode" style="width: 100%">
+                            <a-select-option value="suffix">域名及子域名</a-select-option>
+                            <a-select-option value="exact">精确域名</a-select-option>
+                            <a-select-option value="keyword">域名关键词</a-select-option>
+                            <a-select-option value="regexp">正则表达式（高级）</a-select-option>
+                        </a-select>
+                    </a-form-item>
+                    <a-form-item label="域名">
+                        <a-input v-model.trim="ruleModal.value" placeholder="openai.com"></a-input>
+                    </a-form-item>
+                    <a-alert type="info" show-icon :message="matchModeHelp(ruleModal.matchMode)"></a-alert>
+                </a-form>
+            </a-modal>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            group: null,
+            groupId: 0,
+            ruleModal: {
+                visible: false,
+                editingId: 0,
+                matchMode: 'suffix',
+                value: '',
+            },
+        },
+        methods: {
+            parseGroupId() {
+                const parts = location.pathname.split('/').filter(Boolean);
+                const value = parseInt(parts[parts.length - 1], 10);
+                this.groupId = Number.isNaN(value) ? 0 : value;
+            },
+            async loadGroup() {
+                const msg = await HttpUtil.get(`/n5/api/simple/traffic-rule-group/${this.groupId}`);
+                if (!msg.success) {
+                    return;
+                }
+                this.group = msg.obj;
+            },
+            matchModeLabel(mode) {
+                const labels = {
+                    exact: '精确域名',
+                    suffix: '域名及子域名',
+                    keyword: '域名关键词',
+                    regexp: '正则表达式',
+                };
+                return labels[mode] || mode;
+            },
+            matchModeHelp(mode) {
+                if (mode === 'exact') {
+                    return '仅匹配当前完整域名。例如 example.com 只匹配 example.com，不会匹配 www.example.com 或 api.example.com。';
+                }
+                if (mode === 'keyword') {
+                    return '只要域名中包含该关键词即可匹配。例如 google 可匹配 google.com、googlevideo.com、accounts.google.com。';
+                }
+                if (mode === 'regexp') {
+                    return '使用正则表达式匹配域名，仅建议高级用户使用。';
+                }
+                return '匹配当前域名以及所有子域名。例如 example.com 会匹配 example.com、www.example.com、api.example.com。';
+            },
+            domainPayload() {
+                const prefixes = {
+                    exact: 'full:',
+                    suffix: 'domain:',
+                    keyword: 'keyword:',
+                    regexp: 'regexp:',
+                };
+                return `${prefixes[this.ruleModal.matchMode] || 'domain:'}${this.ruleModal.value}`;
+            },
+            openAddRule() {
+                this.ruleModal = { visible: true, editingId: 0, matchMode: 'suffix', value: '' };
+            },
+            openEditRule(row) {
+                this.ruleModal = {
+                    visible: true,
+                    editingId: row.id,
+                    matchMode: row.matchMode || 'suffix',
+                    value: row.matchValue || '',
+                };
+            },
+            closeRuleModal() {
+                this.ruleModal.visible = false;
+            },
+            async saveRule() {
+                if (!this.group) {
+                    return;
+                }
+                const payload = { groupId: this.group.id, domain: this.domainPayload() };
+                const url = this.ruleModal.editingId
+                    ? `/n5/api/simple/traffic-rule/update/${this.ruleModal.editingId}`
+                    : '/n5/api/simple/traffic-rule/add';
+                const msg = await HttpUtil.post(url, payload);
+                if (!msg.success) {
+                    return;
+                }
+                this.$message.success(this.ruleModal.editingId ? '规则已更新' : '规则已添加');
+                this.closeRuleModal();
+                await this.loadGroup();
+            },
+            confirmDeleteRule(row) {
+                this.$confirm({
+                    title: '确定删除该规则？',
+                    content: `${this.matchModeLabel(row.matchMode)}：${row.matchValue}`,
+                    okText: '删除',
+                    okType: 'danger',
+                    cancelText: '取消',
+                    onOk: () => this.deleteRule(row),
+                });
+            },
+            async deleteRule(row) {
+                const msg = await HttpUtil.post(`/n5/api/simple/traffic-rule/delete/${row.id}`, {
+                    groupId: this.group.id,
+                });
+                if (!msg.success) {
+                    return;
+                }
+                this.$message.success('规则已删除');
+                await this.loadGroup();
+            },
+            async saveGroupName() {
+                const msg = await HttpUtil.post(`/n5/api/simple/traffic-rule-group/update/${this.group.id}`, { name: this.group.name });
+                if (!msg.success) {
+                    return;
+                }
+                this.$message.success('规则组名称已保存');
+                await this.loadGroup();
+            },
+            async toggleGroup() {
+                const action = this.group.enabled ? 'disable' : 'enable';
+                const msg = await HttpUtil.post(`/n5/api/simple/traffic-rule-group/${action}/${this.group.id}`, {});
+                if (!msg.success) {
+                    return;
+                }
+                this.$message.success('规则组状态已更新');
+                await this.loadGroup();
+            },
+            backToGroups() {
+                location.href = `${basePath}n5/simple/traffic-rules`;
+            },
+        },
+        async mounted() {
+            this.parseGroupId();
+            await this.loadGroup();
+        },
+    });
+</script>
+</body>
+</html>

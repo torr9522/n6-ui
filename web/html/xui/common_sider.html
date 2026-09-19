@@ -1,0 +1,106 @@
+{{define "menuItems"}}
+<a-menu-item key="{{ .base_path }}xui/">
+    <a-icon type="dashboard"></a-icon>
+    <span>系统状态</span>
+</a-menu-item>
+<a-menu-item key="{{ .base_path }}xui/inbounds">
+    <a-icon type="user"></a-icon>
+    <span>入站列表</span>
+</a-menu-item>
+<a-sub-menu key="{{ .base_path }}n5">
+    <template slot="title">
+        <a-icon type="deployment-unit"></a-icon>
+        <span>N5增强</span>
+    </template>
+    <a-menu-item key="{{ .base_path }}n5/simple">
+        <a-icon type="thunderbolt"></a-icon>
+        <span>N5出口</span>
+    </a-menu-item>
+    <a-menu-item key="{{ .base_path }}n5/simple/rules">
+        <a-icon type="fork"></a-icon>
+        <span>出口规则</span>
+    </a-menu-item>
+    <a-menu-item key="{{ .base_path }}n5/simple/traffic-rules">
+        <a-icon type="branches"></a-icon>
+        <span>分流规则</span>
+    </a-menu-item>
+    <a-menu-item key="{{ .base_path }}n5/settings">
+        <a-icon type="setting"></a-icon>
+        <span>N5设置</span>
+    </a-menu-item>
+</a-sub-menu>
+<a-menu-item key="{{ .base_path }}xui/subscriptions">
+    <a-icon type="cloud-download"></a-icon>
+    <span>订阅管理</span>
+</a-menu-item>
+<a-menu-item key="{{ .base_path }}xui/access-ips">
+    <a-icon type="global"></a-icon>
+    <span>访问 IP</span>
+</a-menu-item>
+<a-menu-item key="{{ .base_path }}xui/setting">
+    <a-icon type="setting"></a-icon>
+    <span>面板设置</span>
+</a-menu-item>
+<!--<a-menu-item key="{{ .base_path }}xui/clients">-->
+<!--    <a-icon type="laptop"></a-icon>-->
+<!--    <span>客户端</span>-->
+<!--</a-menu-item>-->
+<a-sub-menu>
+    <template slot="title">
+        <a-icon type="link"></a-icon>
+        <span>其他</span>
+    </template>
+    <a-menu-item key="https://github.com/torr9522/n5-ui/">
+        <a-icon type="github"></a-icon>
+        <span>Github</span>
+    </a-menu-item>
+</a-sub-menu>
+<a-menu-item key="{{ .base_path }}logout">
+    <a-icon type="logout"></a-icon>
+    <span>退出登录</span>
+</a-menu-item>
+{{end}}
+
+
+{{define "commonSider"}}
+<a-layout-sider id="sider" class="n5-light-sidebar" theme="light" collapsible breakpoint="md" collapsed-width="0">
+    <a-menu class="n5-sidebar-menu" theme="light" mode="inline" :selected-keys="['{{ .request_uri }}']"
+            :default-open-keys="siderDrawer.n5DefaultOpenKeys"
+            @click="({key}) => key.startsWith('http') ? window.open(key) : location.href = key">
+        {{template "menuItems" .}}
+    </a-menu>
+</a-layout-sider>
+<a-drawer id="sider-drawer" class="n5-light-sidebar-drawer" placement="left" :closable="false"
+          @close="siderDrawer.close()"
+          :visible="siderDrawer.visible" :wrap-style="{ padding: 0 }">
+    <div class="drawer-handle" @click="siderDrawer.change()" slot="handle">
+        <a-icon :type="siderDrawer.visible ? 'close' : 'menu-fold'"></a-icon>
+    </div>
+    <a-menu class="n5-sidebar-menu" theme="light" mode="inline" :selected-keys="['{{ .request_uri }}']"
+        :default-open-keys="siderDrawer.n5DefaultOpenKeys"
+        @click="({key}) => key.startsWith('http') ? window.open(key) : location.href = key">
+        {{template "menuItems" .}}
+    </a-menu>
+</a-drawer>
+<script>
+
+    const n5MenuKey = '{{ .base_path }}n5';
+    const n5MenuPath = '{{ .base_path }}n5/';
+    const siderDrawer = {
+        visible: false,
+        n5DefaultOpenKeys: location.pathname === n5MenuKey || location.pathname.indexOf(n5MenuPath) === 0
+            ? [n5MenuKey]
+            : [],
+        show() {
+            this.visible = true;
+        },
+        close() {
+            this.visible = false;
+        },
+        change() {
+            this.visible = !this.visible;
+        }
+    };
+
+</script>
+{{end}}

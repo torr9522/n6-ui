@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-card title="出口线路">
+                <a-form layout="vertical">
+                    <a-row :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="名称">
+                                <a-input v-model.trim="form.name"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="6">
+                            <a-form-item label="协议">
+                                <a-input v-model.trim="form.protocol" placeholder="freedom / socks / vless"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="10">
+                            <a-form-item label="备注">
+                                <a-input v-model.trim="form.remark"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+                    <a-form-item label="Outbound JSON">
+                        <a-input type="textarea" :rows="8" v-model.trim="form.outboundJson"></a-input>
+                    </a-form-item>
+                    <a-button type="primary" @click="saveEgress">[[ form.id ? '保存出口' : '新增出口' ]]</a-button>
+                    <a-button style="margin-left: 8px" @click="validateEgress">校验配置</a-button>
+                    <a-button style="margin-left: 8px" @click="resetForm">重置</a-button>
+                </a-form>
+            </a-card>
+
+            <a-card title="出口列表" style="margin-top: 16px;">
+                <a-table :data-source="egresses" :pagination="false" :row-key="row => row.id">
+                    <a-table-column title="ID" data-index="id"></a-table-column>
+                    <a-table-column title="名称" data-index="name"></a-table-column>
+                    <a-table-column title="协议" data-index="protocol"></a-table-column>
+                    <a-table-column title="Tag" data-index="tag"></a-table-column>
+                    <a-table-column title="启用">
+                        <template slot-scope="text, row">
+                            <a-tag :color="row.enabled ? 'green' : 'red'">[[ row.enabled ? 'on' : 'off' ]]</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="状态">
+                        <template slot-scope="text, row">
+                            <a-tag :color="statusColor(row.lastStatus)">[[ formatStatus(row.lastStatus) ]]</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="出口IP">
+                        <template slot-scope="text, row">
+                            [[ row.lastExitIP || '-' ]]
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="最后测试时间">
+                        <template slot-scope="text, row">
+                            [[ formatTime(row.lastTestTime) ]]
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="操作">
+                        <template slot-scope="text, row">
+                            <a-button size="small" type="primary" @click="testEgress(row)">测试</a-button>
+                            <a-button size="small" style="margin-left: 8px" @click="openDetail(row)">详情</a-button>
+                            <a-button size="small" style="margin-left: 8px" @click="editEgress(row)">编辑</a-button>
+                            <a-button size="small" type="danger" style="margin-left: 8px" @click="deleteEgress(row)">删除</a-button>
+                        </template>
+                    </a-table-column>
+                </a-table>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            egresses: [],
+            form: {
+                id: 0,
+                name: '',
+                protocol: 'freedom',
+                remark: '',
+                outboundJson: '{"protocol":"freedom","settings":{}}',
+                enabled: true,
+            },
+        },
+        methods: {
+            async loadEgresses() {
+                const msg = await HttpUtil.post('/n5/api/egress/list');
+                if (msg.success) {
+                    this.egresses = msg.obj || [];
+                }
+            },
+            formatStatus(status) {
+                if (!status) {
+                    return 'untested';
+                }
+                return status;
+            },
+            statusColor(status) {
+                if (status === 'success') {
+                    return 'green';
+                }
+                if (status === 'failed') {
+                    return 'red';
+                }
+                return 'default';
+            },
+            formatTime(value) {
+                if (!value) {
+                    return '-';
+                }
+                return DateUtil.formatMillis(value);
+            },
+            editEgress(row) {
+                this.form = Object.assign({}, row, { outboundJson: row.outboundJson });
+            },
+            resetForm() {
+                this.form = {
+                    id: 0,
+                    name: '',
+                    protocol: 'freedom',
+                    remark: '',
+                    outboundJson: '{"protocol":"freedom","settings":{}}',
+                    enabled: true,
+                };
+            },
+            async saveEgress() {
+                const url = this.form.id ? `/n5/api/egress/update/${this.form.id}` : '/n5/api/egress/add';
+                const msg = await HttpUtil.post(url, this.form);
+                if (msg.success) {
+                    this.resetForm();
+                    await this.loadEgresses();
+                }
+            },
+            async validateEgress() {
+                await HttpUtil.post('/n5/api/egress/validate', {
+                    protocol: this.form.protocol,
+                    outboundJson: this.form.outboundJson,
+                    tag: this.form.id ? '' : 'preview-tag',
+                });
+            },
+            async deleteEgress(row) {
+                const msg = await HttpUtil.post(`/n5/api/egress/del/${row.id}`);
+                if (msg.success) {
+                    await this.loadEgresses();
+                }
+            },
+            async testEgress(row) {
+                const msg = await HttpUtil.post('/n5/api/egress/test', { id: row.id });
+                if (msg.success) {
+                    await this.loadEgresses();
+                }
+            },
+            openDetail(row) {
+                location.href = `${basePath}n5/egress-detail?id=${row.id}`;
+            },
+        },
+        async mounted() {
+            await this.loadEgresses();
+        },
+    });
+</script>
+</body>
+</html>

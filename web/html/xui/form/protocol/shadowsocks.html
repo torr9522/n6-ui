@@ -1,0 +1,32 @@
+{{define "form/shadowsocks"}}
+<a-form layout="inline">
+    <a-form-item label="加密">
+        <a-select v-model="inbound.settings.method" style="width: 280px;" @change="shadowsocksMethodChange">
+            <a-select-opt-group label="Shadowsocks 2022">
+                <a-select-option v-for="method in SS2022Methods" :key="method" :value="method">[[ method ]]</a-select-option>
+            </a-select-opt-group>
+            <a-select-opt-group label="Legacy Shadowsocks">
+                <a-select-option v-for="method in SSLegacyMethods" :key="method" :value="method">[[ method ]]</a-select-option>
+            </a-select-opt-group>
+        </a-select>
+    </a-form-item>
+    <a-form-item label="密码">
+        <a-input v-model.trim="inbound.settings.password"></a-input>
+    </a-form-item>
+    <a-form-item v-if="ShadowsocksCredential.is2022(inbound.settings.method)">
+        <a-tooltip title="生成符合当前加密方式的安全密钥">
+            <a-button :loading="shadowsocksKeyGenerating" @click="generateShadowsocksKey">
+                <a-icon type="key"></a-icon>
+                生成密钥
+            </a-button>
+        </a-tooltip>
+    </a-form-item>
+    <a-form-item label="网络">
+        <a-select v-model="inbound.settings.network" style="width: 100px;">
+            <a-select-option value="tcp,udp">tcp+udp</a-select-option>
+            <a-select-option value="tcp">tcp</a-select-option>
+            <a-select-option value="udp">udp</a-select-option>
+        </a-select>
+    </a-form-item>
+</a-form>
+{{end}}

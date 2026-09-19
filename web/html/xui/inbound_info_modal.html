@@ -1,0 +1,100 @@
+{{define "inboundInfoModal"}}
+{{template "component/inboundInfo"}}
+<a-modal id="inbound-info-modal" v-model="infoModal.visible" title="详细信息" @ok="infoModal.ok"
+         :closable="true" :mask-closable="true"
+         ok-text="复制链接" cancel-text='{{ i18n "close" }}' :ok-button-props="infoModal.okBtnPros">
+    <inbound-info :db-inbound="dbInbound" :inbound="inbound"></inbound-info>
+    <template v-if="dbInbound.hasLink()">
+        <a-select v-model="infoModal.selectedShareAddress"
+                  allow-clear style="width: 100%; margin-top: 12px;"
+                  placeholder="常用分享地址">
+            <a-select-option v-for="item in shareAddressStore.addresses"
+                             :key="item.id" :value="item.address">
+                [[ item.remark ? item.remark + ' - ' + item.address : item.address ]]
+            </a-select-option>
+        </a-select>
+        <a-input v-model.trim="infoModal.customShareAddress"
+                 placeholder="手动输入临时分享地址，优先于下拉选择"
+                 style="margin-top: 8px;"></a-input>
+        <a-button id="inbound-info-modal-custom-copy-btn"
+                  style="margin-top: 8px;"
+                  block @click="infoModal.copyCustomLink()">
+            复制自定义分享链接
+        </a-button>
+    </template>
+</a-modal>
+<script>
+
+    const infoModal = {
+        visible: false,
+        inbound: new Inbound(),
+        dbInbound: new DBInbound(),
+        customShareAddress: '',
+        selectedShareAddress: undefined,
+        clipboard: null,
+        okBtnPros: {
+            attrs: {
+                id: "inbound-info-modal-ok-btn",
+                style: "",
+            },
+        },
+        show(dbInbound) {
+            this.inbound = dbInbound.toInbound();
+            this.dbInbound = new DBInbound(dbInbound);
+            this.customShareAddress = '';
+            this.selectedShareAddress = undefined;
+            this.visible = true;
+            shareAddressStore.load();
+
+            if (dbInbound.hasLink()) {
+                this.okBtnPros.attrs.style = "";
+            } else {
+                this.okBtnPros.attrs.style = "display: none";
+            }
+
+            if (this.clipboard == null) {
+                infoModalApp.$nextTick(() => {
+                    this.clipboard = new ClipboardJS(`#${this.okBtnPros.attrs.id}`, {
+                        text: () => this.dbInbound.genLink(),
+                    });
+                    this.clipboard.on('success', () => app.$message.success('复制成功'));
+                });
+            }
+        },
+        getCustomShareAddress() {
+            if (!ObjectUtil.isEmpty(this.customShareAddress)) {
+                return this.customShareAddress;
+            }
+            return this.selectedShareAddress || '';
+        },
+        async copyCustomLink() {
+            const address = this.getCustomShareAddress();
+            if (ObjectUtil.isEmpty(address)) {
+                app.$message.error('请输入或选择分享地址');
+                return;
+            }
+            await copyShareText(this.dbInbound.genLink(address));
+            app.$message.success('复制成功');
+        },
+        close() {
+            infoModal.visible = false;
+        },
+    };
+
+    const infoModalApp = new Vue({
+        delimiters: ['[[', ']]'],
+        el: '#inbound-info-modal',
+        data: {
+            infoModal,
+            get dbInbound() {
+                return this.infoModal.dbInbound;
+            },
+            get inbound() {
+                return this.infoModal.inbound;
+            },
+            shareAddressStore,
+        },
+    });
+
+</script>
+{{end}}

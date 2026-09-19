@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-card title="策略信息">
+                <a-row :gutter="12" style="margin-bottom: 16px;">
+                    <a-col :xs="24" :sm="8">
+                        <a-input v-model.trim="policyForm.name" placeholder="策略名称"></a-input>
+                    </a-col>
+                    <a-col :xs="24" :sm="6">
+                        <a-select v-model="policyForm.defaultTargetType" style="width: 100%">
+                            <a-select-option value="egress">egress</a-select-option>
+                            <a-select-option value="pool">pool</a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="6">
+                        <a-select v-model="policyForm.defaultTargetId" style="width: 100%" placeholder="未匹配流量目标">
+                            <a-select-option v-for="item in currentPolicyTargets()" :key="item.id" :value="item.id">
+                                [[ item.id ]] - [[ item.name ]]
+                            </a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="4">
+                        <a-button type="primary" @click="savePolicy">保存策略</a-button>
+                    </a-col>
+                </a-row>
+
+                <a-descriptions bordered :column="2" size="small">
+                    <a-descriptions-item label="策略名称">[[ detail.policy ? detail.policy.name : '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="状态">
+                        <a-tag :color="detail.policy && detail.policy.enabled ? 'green' : 'red'">
+                            [[ detail.policy && detail.policy.enabled ? 'enabled' : 'disabled' ]]
+                        </a-tag>
+                    </a-descriptions-item>
+                    <a-descriptions-item label="未匹配流量目标类型">[[ detail.policy ? detail.policy.defaultTargetType : '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="未匹配流量目标">[[ detail.policy ? detail.policy.defaultTargetId : '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="规则数量">[[ detail.ruleCount || 0 ]]</a-descriptions-item>
+                    <a-descriptions-item label="绑定入口数量">[[ detail.bindingCount || 0 ]]</a-descriptions-item>
+                    <a-descriptions-item label="创建时间">[[ formatTime(detail.policy ? detail.policy.createdAt : 0) ]]</a-descriptions-item>
+                    <a-descriptions-item label="更新时间">[[ formatTime(detail.policy ? detail.policy.updatedAt : 0) ]]</a-descriptions-item>
+                </a-descriptions>
+
+                <div style="margin-top: 16px;">
+                    <a-button v-if="detail.policy && detail.policy.enabled" @click="disablePolicy">停用策略</a-button>
+                    <a-button v-if="detail.policy && !detail.policy.enabled" type="primary" @click="enablePolicy">启用策略</a-button>
+                    <a-button type="danger" style="margin-left: 8px" @click="deletePolicy">删除策略</a-button>
+                </div>
+            </a-card>
+
+            <a-card title="规则编辑" style="margin-top: 16px;">
+                <a-row :gutter="12">
+                    <a-col :xs="24" :sm="4">
+                        <a-select v-model="ruleForm.ruleType" style="width: 100%">
+                            <a-select-option value="domain">domain</a-select-option>
+                            <a-select-option value="ip">ip</a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="4">
+                        <a-input v-model.trim="ruleForm.matchMode" placeholder="exact / suffix / keyword / cidr"></a-input>
+                    </a-col>
+                    <a-col :xs="24" :sm="6">
+                        <a-input v-model.trim="ruleForm.matchValue" placeholder="匹配值"></a-input>
+                    </a-col>
+                    <a-col :xs="24" :sm="4">
+                        <a-select v-model="ruleForm.targetType" style="width: 100%">
+                            <a-select-option value="egress">egress</a-select-option>
+                            <a-select-option value="pool">pool</a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="4">
+                        <a-select v-model="ruleForm.targetId" style="width: 100%" placeholder="目标">
+                            <a-select-option v-for="item in currentRuleTargets()" :key="item.id" :value="item.id">
+                                [[ item.id ]] - [[ item.name ]]
+                            </a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="2">
+                        <a-input-number v-model="ruleForm.sortOrder" :min="1" style="width: 100%"></a-input-number>
+                    </a-col>
+                </a-row>
+                <a-button type="primary" style="margin-top: 12px" @click="saveRule">[[ ruleForm.id ? '保存规则' : '新增规则' ]]</a-button>
+                <a-button style="margin-top: 12px; margin-left: 8px" @click="resetRuleForm">重置</a-button>
+            </a-card>
+
+            <a-card title="规则列表" style="margin-top: 16px;">
+                <a-table :data-source="detail.rules || []" :pagination="false" :row-key="row => row.id" size="small">
+                    <a-table-column title="顺序" data-index="sortOrder"></a-table-column>
+                    <a-table-column title="类型" data-index="ruleType"></a-table-column>
+                    <a-table-column title="匹配模式" data-index="matchMode"></a-table-column>
+                    <a-table-column title="匹配内容" data-index="matchValue"></a-table-column>
+                    <a-table-column title="目标">
+                        <template slot-scope="text, row">[[ row.targetType ]] / [[ row.targetId ]]</template>
+                    </a-table-column>
+                    <a-table-column title="启用">
+                        <template slot-scope="text, row">
+                            <a-tag :color="row.enabled ? 'green' : 'red'">[[ row.enabled ? 'on' : 'off' ]]</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="操作">
+                        <template slot-scope="text, row, index">
+                            <a-button size="small" @click="editRule(row)">编辑</a-button>
+                            <a-button size="small" style="margin-left: 8px" @click="toggleRule(row)">
+                                [[ row.enabled ? '停用' : '启用' ]]
+                            </a-button>
+                            <a-button size="small" style="margin-left: 8px" @click="moveRule(index, -1)">上移</a-button>
+                            <a-button size="small" style="margin-left: 8px" @click="moveRule(index, 1)">下移</a-button>
+                            <a-button size="small" type="danger" style="margin-left: 8px" @click="deleteRule(row)">删除</a-button>
+                        </template>
+                    </a-table-column>
+                </a-table>
+            </a-card>
+
+            <a-card title="绑定入口" style="margin-top: 16px;">
+                <a-row :gutter="12" style="margin-bottom: 16px;">
+                    <a-col :xs="24" :sm="8">
+                        <a-select v-model="bindingForm.inboundId" style="width: 100%" placeholder="选择入口">
+                            <a-select-option v-for="item in inbounds" :key="item.id" :value="item.id">
+                                [[ item.id ]] - [[ item.remark || item.tag ]]
+                            </a-select-option>
+                        </a-select>
+                    </a-col>
+                    <a-col :xs="24" :sm="8">
+                        <a-button type="primary" @click="rebindPolicy">重新绑定到当前策略</a-button>
+                    </a-col>
+                </a-row>
+                <a-table :data-source="detail.bindings || []" :pagination="false" :row-key="row => row.id" size="small">
+                    <a-table-column title="InboundId" data-index="inboundId"></a-table-column>
+                    <a-table-column title="Tag" data-index="inboundTag"></a-table-column>
+                    <a-table-column title="备注" data-index="inboundName"></a-table-column>
+                    <a-table-column title="操作">
+                        <template slot-scope="text, row">
+                            <a-button size="small" type="danger" @click="unbindPolicy(row)">解绑</a-button>
+                        </template>
+                    </a-table-column>
+                </a-table>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            policyId: 0,
+            inbounds: [],
+            egresses: [],
+            pools: [],
+            detail: {
+                policy: null,
+                rules: [],
+                bindings: [],
+                ruleCount: 0,
+                bindingCount: 0,
+            },
+            policyForm: {
+                name: '',
+                defaultTargetType: 'egress',
+                defaultTargetId: undefined,
+                enabled: true,
+            },
+            ruleForm: {
+                id: 0,
+                ruleType: 'domain',
+                matchMode: 'exact',
+                matchValue: '',
+                targetType: 'egress',
+                targetId: undefined,
+                sortOrder: 1,
+            },
+            bindingForm: {
+                inboundId: undefined,
+            },
+        },
+        methods: {
+            resolvePolicyId() {
+                const id = parseInt(new URLSearchParams(location.search).get('id') || '0', 10);
+                this.policyId = id > 0 ? id : 0;
+            },
+            formatTime(value) {
+                if (!value) {
+                    return '-';
+                }
+                return DateUtil.formatMillis(value);
+            },
+            currentPolicyTargets() {
+                return this.policyForm.defaultTargetType === 'pool' ? this.pools : this.egresses;
+            },
+            currentRuleTargets() {
+                return this.ruleForm.targetType === 'pool' ? this.pools : this.egresses;
+            },
+            resetRuleForm() {
+                this.ruleForm = {
+                    id: 0,
+                    ruleType: 'domain',
+                    matchMode: 'exact',
+                    matchValue: '',
+                    targetType: 'egress',
+                    targetId: undefined,
+                    sortOrder: (this.detail.rules || []).length + 1,
+                };
+            },
+            async loadInbounds() {
+                const msg = await HttpUtil.post('/xui/inbound/list');
+                if (msg.success) {
+                    this.inbounds = msg.obj || [];
+                    if (!this.bindingForm.inboundId && this.inbounds.length > 0) {
+                        this.bindingForm.inboundId = this.inbounds[0].id;
+                    }
+                }
+            },
+            async loadEgresses() {
+                const msg = await HttpUtil.post('/n5/api/egress/list');
+                if (msg.success) {
+                    this.egresses = msg.obj || [];
+                    if (!this.policyForm.defaultTargetId && this.egresses.length > 0) {
+                        this.policyForm.defaultTargetId = this.egresses[0].id;
+                    }
+                    if (!this.ruleForm.targetId && this.egresses.length > 0) {
+                        this.ruleForm.targetId = this.egresses[0].id;
+                    }
+                }
+            },
+            async loadPools() {
+                const msg = await HttpUtil.post('/n5/api/pool/list');
+                if (msg.success) {
+                    this.pools = msg.obj || [];
+                }
+            },
+            async loadDetail() {
+                if (!this.policyId) {
+                    return;
+                }
+                const msg = await HttpUtil.get(`/n5/api/traffic-policy/get/${this.policyId}`);
+                if (msg.success) {
+                    this.detail = msg.obj || this.detail;
+                    if (this.detail.policy) {
+                        this.policyForm = {
+                            name: this.detail.policy.name,
+                            defaultTargetType: this.detail.policy.defaultTargetType || 'egress',
+                            defaultTargetId: this.detail.policy.defaultTargetId || undefined,
+                            enabled: this.detail.policy.enabled,
+                        };
+                    }
+                    this.resetRuleForm();
+                }
+            },
+            async savePolicy() {
+                const payload = Object.assign({}, this.policyForm, { enabled: this.detail.policy ? this.detail.policy.enabled : true });
+                const msg = await HttpUtil.post(`/n5/api/traffic-policy/update/${this.policyId}`, payload);
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async enablePolicy() {
+                const msg = await HttpUtil.post(`/n5/api/traffic-policy/enable/${this.policyId}`);
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async disablePolicy() {
+                const msg = await HttpUtil.post(`/n5/api/traffic-policy/disable/${this.policyId}`);
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async deletePolicy() {
+                const msg = await HttpUtil.post(`/n5/api/traffic-policy/del/${this.policyId}`);
+                if (msg.success) {
+                    location.href = `${basePath}n5/traffic-policy`;
+                }
+            },
+            editRule(row) {
+                this.ruleForm = {
+                    id: row.id,
+                    ruleType: row.ruleType,
+                    matchMode: row.matchMode,
+                    matchValue: row.matchValue,
+                    targetType: row.targetType,
+                    targetId: row.targetId,
+                    sortOrder: row.sortOrder,
+                };
+            },
+            async saveRule() {
+                const payload = Object.assign({}, this.ruleForm, { policyId: this.policyId, enabled: true });
+                const url = this.ruleForm.id
+                    ? `/n5/api/traffic-policy/rule/update/${this.ruleForm.id}`
+                    : '/n5/api/traffic-policy/rule/add';
+                const msg = await HttpUtil.post(url, payload);
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async deleteRule(row) {
+                const msg = await HttpUtil.post(`/n5/api/traffic-policy/rule/del/${row.id}`);
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async toggleRule(row) {
+                const url = row.enabled
+                    ? `/n5/api/traffic-policy/rule/disable/${row.id}`
+                    : `/n5/api/traffic-policy/rule/enable/${row.id}`;
+                const msg = await HttpUtil.post(url);
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async moveRule(index, delta) {
+                const nextIndex = index + delta;
+                if (nextIndex < 0 || nextIndex >= this.detail.rules.length) {
+                    return;
+                }
+                const copied = (this.detail.rules || []).slice();
+                const temp = copied[index];
+                copied[index] = copied[nextIndex];
+                copied[nextIndex] = temp;
+                const msg = await HttpUtil.post('/n5/api/traffic-policy/rule/reorder', {
+                    policyId: this.policyId,
+                    ruleIds: copied.map(item => item.id),
+                });
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async unbindPolicy(row) {
+                const msg = await HttpUtil.post('/n5/api/traffic-policy/unbind', { inboundId: row.inboundId });
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+            async rebindPolicy() {
+                const msg = await HttpUtil.post('/n5/api/traffic-policy/rebind', {
+                    inboundId: this.bindingForm.inboundId,
+                    policyId: this.policyId,
+                });
+                if (msg.success) {
+                    await this.loadDetail();
+                }
+            },
+        },
+        async mounted() {
+            this.resolvePolicyId();
+            await this.loadInbounds();
+            await this.loadEgresses();
+            await this.loadPools();
+            await this.loadDetail();
+        },
+    });
+</script>
+</body>
+</html>

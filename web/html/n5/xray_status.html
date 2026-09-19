@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-row :gutter="16">
+                <a-col :xs="24" :sm="12" :lg="6">
+                    <a-card title="Enable">
+                        <a-tag :color="status.enabled ? 'green' : 'red'">[[ status.enabled ? 'enabled' : 'disabled' ]]</a-tag>
+                    </a-card>
+                </a-col>
+                <a-col :xs="24" :sm="12" :lg="6">
+                    <a-card title="Outbound">
+                        <div style="font-size: 26px; font-weight: 600;">[[ status.outboundCount ]]</div>
+                    </a-card>
+                </a-col>
+                <a-col :xs="24" :sm="12" :lg="6">
+                    <a-card title="Routing">
+                        <div style="font-size: 26px; font-weight: 600;">[[ status.routingCount ]]</div>
+                    </a-card>
+                </a-col>
+                <a-col :xs="24" :sm="12" :lg="6">
+                    <a-card title="Hash">
+                        <div style="word-break: break-all;">[[ status.hash || '-' ]]</div>
+                    </a-card>
+                </a-col>
+            </a-row>
+
+            <a-card title="Last Apply" style="margin-top: 16px;">
+                <a-descriptions bordered :column="1" size="small">
+                    <a-descriptions-item label="Source">[[ status.lastApply ? status.lastApply.source : '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="Status">
+                        <a-tag :color="statusColor(status.lastApply ? status.lastApply.status : '')">
+                            [[ status.lastApply ? status.lastApply.status : '-' ]]
+                        </a-tag>
+                    </a-descriptions-item>
+                    <a-descriptions-item label="CreatedAt">[[ formatTime(status.lastApply ? status.lastApply.createdAt : 0) ]]</a-descriptions-item>
+                    <a-descriptions-item label="Hash">[[ status.lastApply ? status.lastApply.hash : '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="Base Hash">[[ status.lastApply ? status.lastApply.baseConfigHash : '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="Extension Hash">[[ status.lastApply ? status.lastApply.extensionConfigHash : '-' ]]</a-descriptions-item>
+                    <a-descriptions-item label="Error">[[ status.lastApply && status.lastApply.applyError ? status.lastApply.applyError : '-' ]]</a-descriptions-item>
+                </a-descriptions>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            status: {
+                enabled: false,
+                lastApply: null,
+                outboundCount: 0,
+                routingCount: 0,
+                hash: '',
+            },
+        },
+        methods: {
+            async loadStatus() {
+                const msg = await HttpUtil.post('/n5/api/xray/status');
+                if (msg.success) {
+                    this.status = msg.obj || this.status;
+                }
+            },
+            statusColor(status) {
+                switch (status) {
+                    case 'applied':
+                        return 'green';
+                    case 'validated':
+                        return 'blue';
+                    case 'generated':
+                        return 'gold';
+                    case 'failed':
+                        return 'red';
+                    default:
+                        return 'default';
+                }
+            },
+            formatTime(value) {
+                if (!value) {
+                    return '-';
+                }
+                return DateUtil.formatMillis(value);
+            },
+        },
+        async mounted() {
+            await this.loadStatus();
+        },
+    });
+</script>
+</body>
+</html>

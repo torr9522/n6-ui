@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-card title="编辑出口">
+                <a-alert v-if="!form.supported" type="warning" show-icon :message="form.unsupportedReason || '该出口包含高级配置，请使用高级出口编辑'" style="margin-bottom: 16px;"></a-alert>
+
+                <a-form layout="vertical">
+                    <a-row :gutter="12">
+                        <a-col :xs="24" :sm="18">
+                            <a-form-item label="分享链接（可选）">
+                                <a-input v-model.trim="form.shareLink" :disabled="!form.supported" placeholder="ss:// / vmess:// / vless://"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="6">
+                            <a-form-item label="操作">
+                                <a-button type="primary" style="width: 100%" :disabled="!form.supported" @click="parseShareLink">解析</a-button>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-row :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="名称">
+                                <a-input v-model.trim="form.name" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="协议">
+                                <a-select v-model="form.protocol" :disabled="!form.supported" style="width: 100%" @change="onProtocolChange">
+                                    <a-select-option value="socks5">SOCKS5</a-select-option>
+                                    <a-select-option value="ss">Shadowsocks</a-select-option>
+                                    <a-select-option value="vmess">VMess</a-select-option>
+                                    <a-select-option value="vless">VLESS</a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="地址">
+                                <a-input v-model.trim="form.address" :disabled="!form.supported" placeholder="IP 或域名"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-row :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="端口">
+                                <a-input-number v-model="form.port" :disabled="!form.supported" :min="1" :max="65535" style="width: 100%"></a-input-number>
+                            </a-form-item>
+                        </a-col>
+                        <a-col v-if="form.protocol === 'socks5'" :xs="24" :sm="8">
+                            <a-form-item label="用户名">
+                                <a-input v-model.trim="form.username" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col v-if="form.protocol === 'socks5'" :xs="24" :sm="8">
+                            <a-form-item label="密码">
+                                <a-input-password v-model.trim="form.password" :disabled="!form.supported"></a-input-password>
+                            </a-form-item>
+                        </a-col>
+                        <a-col v-if="form.protocol === 'ss'" :xs="24" :sm="8">
+                            <a-form-item label="加密方式">
+                                <a-select v-model="form.method" :disabled="!form.supported" style="width: 100%" @change="shadowsocksMethodChange">
+                                    <a-select-opt-group label="Shadowsocks 2022">
+                                        <a-select-option v-for="method in ss2022Methods" :key="method" :value="method">[[ method ]]</a-select-option>
+                                    </a-select-opt-group>
+                                    <a-select-opt-group label="Legacy Shadowsocks">
+                                        <a-select-option v-for="method in ssLegacyMethods" :key="method" :value="method">[[ method ]]</a-select-option>
+                                    </a-select-opt-group>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col v-if="form.protocol === 'ss'" :xs="24" :sm="8">
+                            <a-form-item label="密码">
+                                <a-input-password v-model.trim="form.password" :disabled="!form.supported"></a-input-password>
+                                <a-button v-if="ShadowsocksCredential.is2022(form.method)" block :disabled="!form.supported" :loading="ssKeyGenerating" @click="generateShadowsocksKey">
+                                    <a-icon type="key"></a-icon>
+                                    生成密钥
+                                </a-button>
+                            </a-form-item>
+                        </a-col>
+                        <a-col v-if="isProxyProtocol(form.protocol)" :xs="24" :sm="8">
+                            <a-form-item label="UUID">
+                                <a-input v-model.trim="form.uuid" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-row v-if="isProxyProtocol(form.protocol)" :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="网络类型">
+                                <a-select v-model="form.network" :disabled="!form.supported" style="width: 100%" @change="onNetworkChange">
+                                    <a-select-option value="tcp">TCP</a-select-option>
+                                    <a-select-option value="ws">WS</a-select-option>
+                                    <a-select-option value="grpc">gRPC</a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="安全类型">
+                                <a-select v-model="form.security" :disabled="!form.supported" style="width: 100%" @change="onSecurityChange">
+                                    <a-select-option value="none">none</a-select-option>
+                                    <a-select-option value="tls">tls</a-select-option>
+                                    <a-select-option v-if="form.protocol === 'vless'" value="reality">reality</a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col v-if="form.protocol === 'vmess'" :xs="24" :sm="8">
+                            <a-form-item label="AlterID">
+                                <a-input-number v-model="form.alterId" :disabled="!form.supported" :min="0" style="width: 100%"></a-input-number>
+                            </a-form-item>
+                        </a-col>
+                        <a-col v-if="form.protocol === 'vless'" :xs="24" :sm="8">
+                            <a-form-item label="Flow">
+                                <a-input v-model.trim="form.flow" :disabled="!form.supported" placeholder="xtls-rprx-vision"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-row v-if="isProxyProtocol(form.protocol) && form.security !== 'none'" :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="SNI">
+                                <a-input v-model.trim="form.sni" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-row v-if="isProxyProtocol(form.protocol) && form.network === 'ws'" :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="Host">
+                                <a-input v-model.trim="form.host" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="Path">
+                                <a-input v-model.trim="form.path" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-row v-if="isProxyProtocol(form.protocol) && form.network === 'grpc'" :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="gRPC ServiceName">
+                                <a-input v-model.trim="form.serviceName" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-row v-if="form.protocol === 'vless' && form.security === 'reality'" :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="Public Key">
+                                <a-input v-model.trim="form.publicKey" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="Short ID">
+                                <a-input v-model.trim="form.shortId" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="Fingerprint">
+                                <a-input v-model.trim="form.fingerprint" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-row v-if="form.protocol === 'vless' && form.security === 'reality'" :gutter="12">
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="SpiderX">
+                                <a-input v-model.trim="form.spiderX" :disabled="!form.supported"></a-input>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+
+                    <a-button type="primary" :disabled="!form.supported" @click="updateEgress">保存</a-button>
+                    <a-button style="margin-left: 8px" @click="goBack">返回</a-button>
+                </a-form>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const protocolLabels = {
+        socks5: 'SOCKS5',
+        ss: 'Shadowsocks',
+        vmess: 'VMess',
+        vless: 'VLESS',
+        trojan: 'Trojan',
+    };
+
+    const defaultEditForm = () => ({
+        id: 0,
+        name: '',
+        protocol: 'socks5',
+        address: '',
+        port: 1080,
+        username: '',
+        method: 'aes-256-gcm',
+        password: '',
+        uuid: '',
+        alterId: 0,
+        network: 'tcp',
+        security: 'none',
+        sni: '',
+        host: '',
+        path: '/',
+        serviceName: '',
+        flow: '',
+        encryption: 'none',
+        fingerprint: 'chrome',
+        publicKey: '',
+        shortId: '',
+        spiderX: '/',
+        enabled: true,
+        shareLink: '',
+        supported: true,
+        unsupportedReason: '',
+    });
+
+    function protocolTemplate(protocol) {
+        const normalized = String(protocol || '').toLowerCase();
+        const base = {
+            username: '',
+            method: 'aes-256-gcm',
+            password: '',
+            uuid: '',
+            alterId: 0,
+            network: 'tcp',
+            security: 'none',
+            sni: '',
+            host: '',
+            path: '/',
+            serviceName: '',
+            flow: '',
+            encryption: 'none',
+            fingerprint: 'chrome',
+            publicKey: '',
+            shortId: '',
+            spiderX: '/',
+            supported: true,
+            unsupportedReason: '',
+        };
+        if (normalized === 'socks5' || normalized === 'ss' || normalized === 'vmess' || normalized === 'vless') {
+            return base;
+        }
+        return base;
+    }
+
+    function isProxyProtocol(protocol) {
+        return protocol === 'vmess' || protocol === 'vless';
+    }
+
+    function protocolLabel(protocol) {
+        return protocolLabels[protocol] || protocol || '-';
+    }
+
+    function normalizeProtocolForm(form) {
+        if (!isProxyProtocol(form.protocol)) {
+            form.network = 'tcp';
+            form.security = 'none';
+            form.sni = '';
+            form.host = '';
+            form.path = '/';
+            form.serviceName = '';
+            form.flow = '';
+            form.encryption = 'none';
+            form.fingerprint = 'chrome';
+            form.publicKey = '';
+            form.shortId = '';
+            form.spiderX = '/';
+            form.uuid = '';
+            form.alterId = 0;
+        }
+        if (form.protocol === 'ss') {
+            form.username = '';
+        }
+        if (form.protocol === 'socks5') {
+            form.method = 'aes-256-gcm';
+        }
+        if (form.protocol === 'vmess') {
+            if (form.security !== 'tls') {
+                form.sni = '';
+            }
+            form.flow = '';
+            form.encryption = 'none';
+            form.fingerprint = 'chrome';
+            form.publicKey = '';
+            form.shortId = '';
+            form.spiderX = '/';
+        }
+        if (form.protocol === 'vless') {
+            form.encryption = 'none';
+            if (form.security !== 'reality') {
+                form.publicKey = '';
+                form.shortId = '';
+                form.fingerprint = 'chrome';
+                form.spiderX = '/';
+                if (form.security !== 'tls') {
+                    form.sni = '';
+                }
+            } else if (!form.flow) {
+                form.flow = 'xtls-rprx-vision';
+            }
+        }
+        if (form.network !== 'ws') {
+            form.host = '';
+            form.path = '/';
+        } else if (!form.path) {
+            form.path = '/';
+        }
+        if (form.network !== 'grpc') {
+            form.serviceName = '';
+        }
+        return form;
+    }
+
+    function cloneFormWithProtocol(form, protocol) {
+        const next = Object.assign(defaultEditForm(), {
+            id: form.id,
+            name: form.name,
+            address: form.address,
+            port: form.port,
+            enabled: form.enabled,
+            shareLink: form.shareLink,
+            supported: form.supported,
+            unsupportedReason: form.unsupportedReason,
+        }, protocolTemplate(protocol), {
+            protocol: protocol,
+        });
+        return normalizeProtocolForm(next);
+    }
+
+    function suggestShareName(currentName, remark, fallbackLabel, address) {
+        if (String(currentName || '').trim()) {
+            return currentName.trim();
+        }
+        if (String(remark || '').trim()) {
+            return remark.trim();
+        }
+        if (String(address || '').trim()) {
+            return address.trim();
+        }
+        return fallbackLabel;
+    }
+
+    function ensureSupportedShareTransport(inbound) {
+        const network = (inbound.stream && inbound.stream.network) || 'tcp';
+        if (!['tcp', 'ws', 'grpc'].includes(network)) {
+            throw new Error('当前 N5 Simple 出口暂不支持该传输方式');
+        }
+        if (network === 'tcp' && inbound.stream.tcp && inbound.stream.tcp.type && inbound.stream.tcp.type !== 'none') {
+            throw new Error('当前 N5 Simple 出口暂不支持该传输方式');
+        }
+        return network;
+    }
+
+    function buildFormFromParsedLink(parsed, protocol, currentForm) {
+        const next = Object.assign(defaultEditForm(), protocolTemplate(protocol), {
+            id: currentForm.id,
+            protocol: protocol,
+            shareLink: String(currentForm.shareLink || '').trim(),
+            name: suggestShareName(currentForm.name, parsed.remark, protocolLabel(protocol), parsed.address),
+            address: String(parsed.address || '').trim(),
+            port: Number(parsed.inbound.port || 0),
+            enabled: currentForm.enabled,
+        });
+        if (!next.address) {
+            throw new Error('缺少地址');
+        }
+        if (!Number.isInteger(next.port) || next.port < 1 || next.port > 65535) {
+            throw new Error('缺少端口');
+        }
+
+        if (protocol === 'ss') {
+            next.method = parsed.inbound.settings.method || '';
+            next.password = parsed.inbound.settings.password || '';
+            if (!next.method || !next.password) {
+                throw new Error('缺少 Shadowsocks method/password');
+            }
+            return normalizeProtocolForm(next);
+        }
+
+        const inbound = parsed.inbound;
+        const network = ensureSupportedShareTransport(inbound);
+        const security = (inbound.stream && inbound.stream.security) || 'none';
+
+        next.uuid = protocol === 'vmess'
+            ? inbound.settings.vmesses[0].id || ''
+            : inbound.settings.vlesses[0].id || '';
+        if (!next.uuid) {
+            throw new Error('缺少 UUID');
+        }
+        next.network = network;
+        next.security = security;
+
+        if (protocol === 'vmess') {
+            if (!['none', 'tls'].includes(security)) {
+                throw new Error('当前 N5 Simple VMess 仅支持 none 或 tls');
+            }
+            next.alterId = Number(inbound.settings.vmesses[0].alterId || 0);
+        }
+
+        if (protocol === 'vless') {
+            if (!['none', 'tls', 'reality'].includes(security)) {
+                throw new Error('当前 N5 Simple VLESS 仅支持 none、tls 或 reality');
+            }
+            next.flow = inbound.settings.vlesses[0].flow || '';
+            next.encryption = inbound.settings.decryption || 'none';
+            if (next.encryption !== 'none') {
+                throw new Error('当前 N5 Simple VLESS 仅支持 encryption=none');
+            }
+            if (security === 'reality' && !['tcp', 'grpc'].includes(network)) {
+                throw new Error('Reality 分享链接仅支持 tcp 或 grpc 传输');
+            }
+        }
+
+        if (security === 'tls') {
+            next.sni = inbound.stream.tls.server || '';
+        }
+        if (network === 'ws') {
+            next.host = inbound.stream.ws.getHeader('Host') || '';
+            next.path = inbound.stream.ws.path || '/';
+        }
+        if (network === 'grpc') {
+            next.serviceName = inbound.stream.grpc.serviceName || '';
+        }
+        if (protocol === 'vless' && security === 'reality') {
+            next.sni = (inbound.stream.reality.serverNames || [])[0] || '';
+            next.fingerprint = inbound.stream.reality.fingerprint || 'chrome';
+            next.publicKey = inbound.stream.reality.publicKey || '';
+            next.shortId = (inbound.stream.reality.shortIds || [])[0] || '';
+            next.spiderX = inbound.stream.reality.spiderX || '/';
+            if (!next.sni || !next.publicKey) {
+                throw new Error('Reality 缺少 pbk/sni 等必要字段');
+            }
+            if (!next.flow) {
+                next.flow = 'xtls-rprx-vision';
+            }
+        }
+
+        return normalizeProtocolForm(next);
+    }
+
+    function parseSimpleShareLink(link, currentForm) {
+        const value = String(link || '').trim();
+        if (!value) {
+            throw new Error('链接格式无效');
+        }
+        if (value.startsWith('ss://')) {
+            return buildFormFromParsedLink(Inbound.parseSSLink(value), 'ss', currentForm);
+        }
+        if (value.startsWith('vmess://')) {
+            return buildFormFromParsedLink(Inbound.parseVMessLink(value), 'vmess', currentForm);
+        }
+        if (value.startsWith('vless://')) {
+            return buildFormFromParsedLink(Inbound.parseVLESSLink(value), 'vless', currentForm);
+        }
+        if (value.startsWith('trojan://')) {
+            throw new Error('当前 N5 Simple 出口不支持 trojan:// 导入');
+        }
+        throw new Error('不支持的协议');
+    }
+
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            egressId: 0,
+            form: defaultEditForm(),
+            ssLegacyMethods: [...SSLegacyMethods, 'xchacha20-poly1305'],
+            ss2022Methods: SS2022Methods,
+            ShadowsocksCredential,
+            ssKeyGenerating: false,
+        },
+        methods: {
+            isProxyProtocol,
+            parseId() {
+                const params = new URLSearchParams(location.search);
+                return Number(params.get('id') || 0);
+            },
+            async loadEgress() {
+                const msg = await HttpUtil.get(`/n5/api/simple/egress/get/${this.egressId}`);
+                if (!msg.success || !msg.obj) {
+                    return;
+                }
+                this.form = normalizeProtocolForm(Object.assign(defaultEditForm(), msg.obj));
+            },
+            onProtocolChange(value) {
+                if (!this.form.supported) {
+                    return;
+                }
+                this.form = cloneFormWithProtocol(this.form, value);
+            },
+            async shadowsocksMethodChange(method) {
+                if (!this.form.supported || !ShadowsocksCredential.is2022(method)
+                    || ShadowsocksCredential.isValid2022Key(method, this.form.password)) {
+                    return;
+                }
+                await this.generateShadowsocksKey();
+            },
+            async generateShadowsocksKey() {
+                if (!this.form.supported || !ShadowsocksCredential.is2022(this.form.method)) {
+                    return;
+                }
+                this.ssKeyGenerating = true;
+                try {
+                    const msg = await HttpUtil.post('/n5/api/simple/egress/shadowsocks/key', { method: this.form.method });
+                    if (msg.success && msg.obj && msg.obj.password) {
+                        this.form.password = msg.obj.password;
+                    }
+                } finally {
+                    this.ssKeyGenerating = false;
+                }
+            },
+            onNetworkChange() {
+                if (!this.form.supported) {
+                    return;
+                }
+                this.form = normalizeProtocolForm(Object.assign({}, this.form));
+            },
+            onSecurityChange() {
+                if (!this.form.supported) {
+                    return;
+                }
+                this.form = normalizeProtocolForm(Object.assign({}, this.form));
+            },
+            normalizeForm() {
+                this.form = normalizeProtocolForm(Object.assign({}, this.form));
+            },
+            async parseShareLink() {
+                try {
+                    const value = String(this.form.shareLink || '').trim();
+                    if (value.toLowerCase().startsWith('ss://')) {
+                        const current = this.form;
+                        const msg = await HttpUtil.post('/n5/api/simple/egress/share/parse', { link: value });
+                        if (!msg.success || !msg.obj) {
+                            return;
+                        }
+                        this.form = normalizeProtocolForm(Object.assign(defaultEditForm(), protocolTemplate('ss'), msg.obj, {
+                            id: current.id,
+                            protocol: 'ss',
+                            shareLink: value,
+                            name: suggestShareName(current.name, msg.obj.name, 'Shadowsocks', msg.obj.address),
+                            enabled: current.enabled,
+                            supported: true,
+                            unsupportedReason: '',
+                        }));
+                    } else {
+                        this.form = parseSimpleShareLink(value, this.form);
+                    }
+                    this.$message.success('分享链接解析成功');
+                } catch (err) {
+                    this.$message.error(err && err.message ? err.message : '链接格式无效');
+                }
+            },
+            async updateEgress() {
+                this.normalizeForm();
+                const msg = await HttpUtil.post(`/n5/api/simple/egress/update/${this.egressId}`, this.form);
+                if (msg.success) {
+                    location.href = `${basePath}n5/simple`;
+                }
+            },
+            goBack() {
+                location.href = `${basePath}n5/simple`;
+            },
+        },
+        async mounted() {
+            this.egressId = this.parseId();
+            if (this.egressId > 0) {
+                await this.loadEgress();
+            }
+        },
+    });
+</script>
+</body>
+</html>

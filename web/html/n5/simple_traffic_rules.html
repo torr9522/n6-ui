@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+{{template "head" .}}
+<body>
+<a-layout id="app" v-cloak>
+    {{ template "commonSider" . }}
+    <a-layout id="content-layout">
+        <a-layout-content style="margin: 24px 16px;">
+            <a-alert
+                type="info"
+                show-icon
+                style="margin-bottom: 16px;"
+                message="分流规则用于管理可复用规则组；出口规则会在创建时复制快照，后续修改规则组不会自动影响已创建的出口规则。">
+            </a-alert>
+
+            <a-card title="创建规则组">
+                <a-form layout="vertical">
+                    <a-row :gutter="12">
+                        <a-col :xs="24" :sm="10">
+                            <a-form-item label="规则组名称">
+                                <a-input v-model.trim="form.name" placeholder="例如：OpenAI 相关"></a-input>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="8">
+                            <a-form-item label="类型">
+                                <a-select v-model="form.groupType" style="width: 100%">
+                                    <a-select-option value="custom">自定义分流</a-select-option>
+                                </a-select>
+                            </a-form-item>
+                        </a-col>
+                        <a-col :xs="24" :sm="6">
+                            <a-form-item label="状态">
+                                <a-tag color="green">启用</a-tag>
+                            </a-form-item>
+                        </a-col>
+                    </a-row>
+                    <a-button type="primary" @click="createGroup">创建</a-button>
+                    <a-button style="margin-left: 8px" @click="openSimpleRules">出口规则</a-button>
+                </a-form>
+            </a-card>
+
+            <a-card title="规则组列表" style="margin-top: 16px;">
+                <a-table :data-source="groups" :pagination="false" :row-key="row => row.id">
+                    <a-table-column title="名称" data-index="name"></a-table-column>
+                    <a-table-column title="类型">
+                        <template slot-scope="text, row">
+                            [[ row.groupLabel ]]
+                            <a-tag style="margin-left: 8px" :color="row.builtin ? 'blue' : 'default'">[[ row.kindLabel ]]</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="状态">
+                        <template slot-scope="text, row">
+                            <a-tag :color="row.enabled ? 'green' : 'default'">[[ row.enabled ? '启用' : '停用' ]]</a-tag>
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="规则数量" data-index="ruleCount"></a-table-column>
+                    <a-table-column title="已生成执行规则">
+                        <template slot-scope="text, row">
+                            [[ row.snapshotCount || 0 ]]
+                        </template>
+                    </a-table-column>
+                    <a-table-column title="操作">
+                        <template slot-scope="text, row">
+                            <a-button size="small" type="primary" @click="manageGroup(row)">管理规则</a-button>
+                            <a-button size="small" style="margin-left: 8px" @click="toggleGroup(row)">
+                                [[ row.enabled ? '停用' : '启用' ]]
+                            </a-button>
+                            <a-button v-if="!row.builtin" size="small" type="danger" style="margin-left: 8px" @click="deleteGroup(row)">删除</a-button>
+                        </template>
+                    </a-table-column>
+                </a-table>
+            </a-card>
+        </a-layout-content>
+    </a-layout>
+</a-layout>
+{{template "js" .}}
+<script>
+    const defaultGroupForm = () => ({
+        name: '',
+        groupType: 'custom',
+    });
+
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['[[', ']]'],
+        data: {
+            siderDrawer,
+            groups: [],
+            form: defaultGroupForm(),
+        },
+        methods: {
+            async loadGroups() {
+                const msg = await HttpUtil.get('/n5/api/simple/traffic-rule-groups');
+                if (!msg.success) {
+                    return;
+                }
+                this.groups = msg.obj || [];
+            },
+            async createGroup() {
+                const msg = await HttpUtil.post('/n5/api/simple/traffic-rule-group/add', this.form);
+                if (!msg.success) {
+                    return;
+                }
+                this.$message.success('规则组已创建');
+                location.href = `${basePath}n5/simple/traffic-rules/${msg.obj.id}`;
+            },
+            async toggleGroup(row) {
+                const action = row.enabled ? 'disable' : 'enable';
+                const msg = await HttpUtil.post(`/n5/api/simple/traffic-rule-group/${action}/${row.id}`, {});
+                if (!msg.success) {
+                    return;
+                }
+                this.$message.success('规则组状态已更新');
+                await this.loadGroups();
+            },
+            async deleteGroup(row) {
+                if (row.deleteHint) {
+                    this.$message.info(row.deleteHint);
+                }
+                const msg = await HttpUtil.post(`/n5/api/simple/traffic-rule-group/delete/${row.id}`, {});
+                if (!msg.success) {
+                    return;
+                }
+                this.$message.success('规则组已删除');
+                await this.loadGroups();
+            },
+            manageGroup(row) {
+                location.href = `${basePath}n5/simple/traffic-rules/${row.id}`;
+            },
+            openSimpleRules() {
+                location.href = `${basePath}n5/simple/rules`;
+            },
+        },
+        async mounted() {
+            await this.loadGroups();
+        },
+    });
+</script>
+</body>
+</html>

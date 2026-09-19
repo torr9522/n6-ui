@@ -1,0 +1,170 @@
+{
+  "version": "1.0",
+  "stable_baseline": "v0.2.0",
+  "release_commit": "1265df551af46b7abe5a7e35fc2621d73cbae4be",
+  "verified_candidate": "604f8afe084a11d0f706c836af77dbf16eb52a09",
+  "candidate_tree": "6cd286b3e2932736233814e7ea915805110ce086",
+  "xray_version": "26.5.3",
+  "xray_sha256": "128f9c34811ee74b3770eef7010d011e3946e85dfab28f2ed1804e380461b05e",
+  "upgrade_policy": "Clean Install supported; in-place upgrade not guaranteed",
+  "checkpoints": [
+    {
+      "name": "Fix 01 Rule Group List Page",
+      "tag": "n5-local-fix-01-rule-group-list-page",
+      "commit": "a898bd14f702b75b8e9178fa6ee05f6fa10ce47d",
+      "category": "fix",
+      "summary": "Make the traffic rule group first-level page a group management page.",
+      "tests": ["browser CRUD", "service regression"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 02 Rule Group Detail Page",
+      "tag": "n5-local-fix-02-rule-group-detail-page",
+      "commit": "a898bd14f702b75b8e9178fa6ee05f6fa10ce47d",
+      "category": "fix",
+      "summary": "Add a focused second-level manage-rules page for one custom group.",
+      "tests": ["browser CRUD", "service regression"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 03 Chinese Matcher Labels",
+      "tag": "n5-local-fix-03-domain-match-chinese-labels",
+      "commit": "a898bd14f702b75b8e9178fa6ee05f6fa10ce47d",
+      "category": "fix",
+      "summary": "Show user-facing Chinese matcher labels while preserving stored matcher values.",
+      "tests": ["rule CRUD UAT"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 04 Rule Group Editing",
+      "tag": "n5-local-fix-04-rule-group-editing",
+      "commit": "a898bd14f702b75b8e9178fa6ee05f6fa10ce47d",
+      "category": "fix",
+      "summary": "Support add, edit, delete, and rename operations for rule groups.",
+      "tests": ["browser CRUD", "service regression"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 05 Direct Custom Edit",
+      "tag": "n5-local-fix-05-direct-custom-edit",
+      "commit": "a898bd14f702b75b8e9178fa6ee05f6fa10ce47d",
+      "category": "fix",
+      "summary": "Allow direct custom domain execution rules to be edited in place.",
+      "tests": ["direct custom edit UAT", "service regression"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 06 Custom Flow Separation",
+      "tag": "n5-local-fix-06-custom-flow-separation",
+      "commit": "a898bd14f702b75b8e9178fa6ee05f6fa10ce47d",
+      "category": "fix",
+      "summary": "Separate one-off direct custom flow from reusable custom group flow.",
+      "tests": ["UI flow checks", "API regression"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 07 Deterministic Routing Priority",
+      "tag": "n5-local-fix-07-deterministic-routing-priority",
+      "commit": "a898bd14f702b75b8e9178fa6ee05f6fa10ce47d",
+      "category": "fix",
+      "summary": "Make Simple routing priority deterministic and independent of creation order.",
+      "tests": ["priority regression", "creation-order independence"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 08 Routing Conflict Warning",
+      "tag": "n5-local-fix-08-routing-conflict-warning",
+      "commit": "a898bd14f702b75b8e9178fa6ee05f6fa10ce47d",
+      "category": "fix",
+      "summary": "Warn about overlapping Simple rules and explain which rule wins.",
+      "tests": ["conflict warning UAT", "overlap analysis regression"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 09 Rule Group Display Name",
+      "tag": "n5-local-fix-09-rule-group-display-name",
+      "commit": "6145d9acf24225ce607dd657fce837703533bb23",
+      "category": "fix",
+      "summary": "Show real custom group names while preserving groupId binding.",
+      "tests": ["rename display UAT", "dropdown validation"],
+      "status": "PASS"
+    },
+    {
+      "name": "Fix 10 N5 Menu Expanded",
+      "tag": "n5-local-fix-10-n5-menu-expanded",
+      "commit": "6777b8545163ab60d4bc83e4b87d2e192e065ad5",
+      "category": "fix",
+      "summary": "Keep the N5 enhanced menu expanded across N5 pages, refreshes, and direct URLs.",
+      "tests": ["navigation UAT"],
+      "status": "PASS"
+    },
+    {
+      "name": "P1-01 Egress Reference Protection",
+      "tag": "n5-local-p1-01-egress-reference-protection",
+      "commit": "1d89561c21e6238e8a8a224e62f7e954ddd8c8fb",
+      "category": "p1",
+      "summary": "Reject deleting egress records while policies, rules, pools, or fallbacks still reference them.",
+      "tests": ["reference rejection", "delete after unreference", "DB consistency"],
+      "status": "PASS"
+    },
+    {
+      "name": "P1-02 Inbound Delete Cleanup",
+      "tag": "n5-local-p1-02-inbound-delete-cleanup",
+      "commit": "93e2616fcfd6ea9a486788554aa0d36c550fc322",
+      "category": "p1",
+      "summary": "Clean only the deleted inbound's Simple-managed execution state.",
+      "tests": ["inbound delete regression", "orphan counter audit"],
+      "status": "PASS"
+    },
+    {
+      "name": "P1-03 Advanced Simple Protection",
+      "tag": "n5-local-p1-03-advanced-simple-protection",
+      "commit": "61c622d169d12ab667981f18333d2fb46f27cfb2",
+      "category": "p1",
+      "summary": "Reject Advanced API mutation of Simple-managed state.",
+      "tests": ["Advanced rejection matrix", "Advanced positive CRUD"],
+      "status": "PASS"
+    },
+    {
+      "name": "P2-01 Simple Transaction",
+      "tag": "n5-local-p2-01-simple-transaction",
+      "commit": "292b362b19fa8bf316e975df246419e3711ce9c3",
+      "category": "p2",
+      "summary": "Wrap Simple create, update, and delete mutations in DB transactions.",
+      "tests": ["fault injection rollback", "Simple CRUD regression"],
+      "status": "PASS"
+    },
+    {
+      "name": "P2-02 Disabled Builtin Protection",
+      "tag": "n5-local-p2-02-disabled-builtin-protection",
+      "commit": "3b733af4d7a5c1a2cadb7844363283e5ee2d0124",
+      "category": "p2",
+      "summary": "Backend rejects new Simple execution creation for disabled builtin groups.",
+      "tests": ["disable rejection", "re-enable positive path", "snapshot preservation"],
+      "status": "PASS"
+    },
+    {
+      "name": "RC-01 Mobile Release Readiness",
+      "tag": "n5-local-rc-01-mobile-release-readiness",
+      "commit": "e87c9753491452a6709c3bd94ff883d5152e2d7a",
+      "category": "rc",
+      "summary": "Make N5 mobile table actions and modal footers reachable.",
+      "tests": ["320x720 mobile", "390x844 mobile", "horizontal scroll action reachability"],
+      "status": "PASS"
+    },
+    {
+      "name": "RC-02 SQLite Busy Handling",
+      "tag": "n5-local-rc-02-sqlite-busy-handling",
+      "commit": "604f8afe084a11d0f706c836af77dbf16eb52a09",
+      "category": "rc",
+      "summary": "Sanitize SQLite busy/locked errors and avoid raw SQL or HTTP 500 leakage.",
+      "tests": ["concurrency smoke", "HTTP status audit", "raw SQL leakage audit"],
+      "status": "PASS"
+    }
+  ],
+  "legacy_local_only_tags": [
+    "n5-local-fix-01-simple-rule-group-and-priority",
+    "n5-local-fix-02-rule-group-display-name",
+    "n5-local-fix-03-n5-menu-expanded"
+  ]
+}
