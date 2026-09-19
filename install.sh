@@ -13,6 +13,8 @@ XUI_REPO_BRANCH="${XUI_REPO_BRANCH:-main}"
 INSTALL_MODE="${INSTALL_MODE:-source}"
 XUI_RELEASE_TAG="${XUI_RELEASE_TAG:-v0.1.0}"
 XUI_RELEASES_BASE="${XUI_RELEASES_BASE:-${XUI_RELEASES_RAW_BASE:-https://github.com/torr9522/n6-ui/releases/download/${XUI_RELEASE_TAG}}}"
+XUI_RUNTIME_RELEASE_TAG="${XUI_RUNTIME_RELEASE_TAG:-n6-runtime-26.5.3-amd64}"
+XUI_RUNTIME_RELEASES_BASE="${XUI_RUNTIME_RELEASES_BASE:-https://github.com/torr9522/n6-ui/releases/download/${XUI_RUNTIME_RELEASE_TAG}}"
 XUI_XRAY_VERSION="${XUI_XRAY_VERSION:-26.5.3}"
 XUI_XRAY_SHA256="${XUI_XRAY_SHA256:-128f9c34811ee74b3770eef7010d011e3946e85dfab28f2ed1804e380461b05e}"
 
@@ -127,7 +129,7 @@ sync_default_xray_assets() {
 
     command -v unzip >/dev/null 2>&1 || error_exit "未找到 unzip，无法同步默认 xray 版本。"
     xray_asset_name="$(get_xray_release_asset_name "${arch}")" || error_exit "无法确定 xray 资源包名称。"
-    xray_url="${XUI_XRAY_URL:-${XUI_RELEASES_BASE}/${xray_asset_name}}"
+    xray_url="${XUI_XRAY_URL:-${XUI_RUNTIME_RELEASES_BASE}/${xray_asset_name}}"
 
     rm -f "${xray_zip}"
     for candidate in "${local_candidates[@]}"; do

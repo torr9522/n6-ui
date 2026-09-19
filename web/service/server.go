@@ -203,7 +203,7 @@ func (s *ServerService) downloadXRay(version string) (string, error) {
 
 	baseURL := strings.TrimRight(os.Getenv("XUI_RELEASES_BASE"), "/")
 	if baseURL == "" {
-		baseURL = "https://github.com/torr9522/n6-ui/releases/download/v0.1.0"
+		baseURL = "https://github.com/torr9522/n6-ui/releases/download/n6-runtime-26.5.3-amd64"
 	}
 	url := fmt.Sprintf("%s/%s", baseURL, zipName)
 	resp, err := http.Get(url)
