@@ -2,10 +2,10 @@ package service
 
 import (
 	"errors"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/logger"
 	"gorm.io/gorm"
-	"x-ui/database"
-	"x-ui/database/model"
-	"x-ui/logger"
 )
 
 type UserService struct {

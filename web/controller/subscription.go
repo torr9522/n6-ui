@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/web/service"
 	"gorm.io/gorm"
-	"x-ui/database"
-	"x-ui/web/service"
 )
 
 type SubscriptionController struct {

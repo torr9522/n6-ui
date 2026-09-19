@@ -6,17 +6,17 @@
     {{ template "commonSider" . }}
     <a-layout id="content-layout">
         <a-layout-content style="margin: 24px 16px;">
-            <a-card title="N5设置">
+            <a-card title="n6-ui 设置">
                 <a-form layout="vertical">
                     <a-row :gutter="16">
                         <a-col :xs="24" :sm="16">
-                            <a-form-item label="启用 N5 Xray 扩展">
+                            <a-form-item label="启用 n6-ui Xray 扩展">
                                 <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
                                     <div>
                                         <div style="font-weight: 500;">[[ statusText ]]</div>
                                         <div style="color: rgba(0, 0, 0, 0.45); margin-top: 4px;">
-                                            开启后，N5 出口与分流规则会合并到 Xray 运行配置。
-                                            关闭后，N5 扩展配置不会参与 Xray merge。
+                                            开启后，n6-ui 出口与分流规则会合并到 Xray 运行配置。
+                                            关闭后，n6-ui 扩展配置不会参与 Xray merge。
                                         </div>
                                     </div>
                                     <a-switch v-model="enabled"></a-switch>
@@ -65,7 +65,7 @@
                     return;
                 }
                 this.enabled = !!msg.obj.enabled;
-                this.$message.success('N5 设置已保存，等待自动应用');
+                this.$message.success('n6-ui 设置已保存，等待自动应用');
             },
         },
         async mounted() {

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	n5model "x-ui/database/model/n5"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
 )
 
 func initN5TestDB(t *testing.T) {

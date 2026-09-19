@@ -4,6 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"github.com/torr9522/n6-ui/database"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/xray"
 	"io"
 	"net"
 	"net/http"
@@ -12,10 +16,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"x-ui/database"
-	n5model "x-ui/database/model/n5"
-	"x-ui/util/common"
-	"x-ui/xray"
 
 	"gorm.io/gorm"
 )
@@ -304,7 +304,7 @@ func runSOCKSHTTPIPProbe(proxyAddr string, url string, timeout time.Duration) (s
 	if err != nil {
 		return "", err
 	}
-	req.Header.Set("User-Agent", "n5-ui-egress-test")
+	req.Header.Set("User-Agent", "n6-ui-egress-test")
 
 	resp, err := client.Do(req)
 	if err != nil {

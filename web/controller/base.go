@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/torr9522/n6-ui/web/session"
 	"net/http"
-	"x-ui/web/session"
 )
 
 type BaseController struct {

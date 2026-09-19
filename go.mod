@@ -1,4 +1,4 @@
-module x-ui
+module github.com/torr9522/n6-ui
 
 go 1.16
 

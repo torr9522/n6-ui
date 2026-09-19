@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"x-ui/util/common"
+	"github.com/torr9522/n6-ui/util/common"
 )
 
 type ShareLink struct {

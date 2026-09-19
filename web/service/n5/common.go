@@ -3,14 +3,14 @@ package n5
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/torr9522/n6-ui/database"
+	legacyModel "github.com/torr9522/n6-ui/database/model"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/util/common"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 	"net"
 	"regexp"
 	"strings"
-	"x-ui/database"
-	legacyModel "x-ui/database/model"
-	n5model "x-ui/database/model/n5"
-	"x-ui/util/common"
-	ssservice "x-ui/web/service/shadowsocks"
 )
 
 const (

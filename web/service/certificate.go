@@ -4,13 +4,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/web/entity"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
-	"x-ui/util/common"
-	"x-ui/web/entity"
 )
 
 const CertificateDir = "/etc/x-ui/certs"

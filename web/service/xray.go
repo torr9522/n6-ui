@@ -3,12 +3,12 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/logger"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
+	"github.com/torr9522/n6-ui/xray"
 	"go.uber.org/atomic"
 	"sync"
-	"x-ui/database/model"
-	"x-ui/logger"
-	n5service "x-ui/web/service/n5"
-	"x-ui/xray"
 )
 
 var p *xray.Process

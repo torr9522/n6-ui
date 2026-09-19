@@ -2,6 +2,8 @@ package service
 
 import (
 	"archive/zip"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/disk"
@@ -9,6 +11,9 @@ import (
 	"github.com/shirou/gopsutil/load"
 	"github.com/shirou/gopsutil/mem"
 	"github.com/shirou/gopsutil/net"
+	"github.com/torr9522/n6-ui/logger"
+	"github.com/torr9522/n6-ui/util/sys"
+	"github.com/torr9522/n6-ui/xray"
 	"io"
 	"io/fs"
 	"net/http"
@@ -17,9 +22,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"x-ui/logger"
-	"x-ui/util/sys"
-	"x-ui/xray"
 )
 
 type ProcessState string
@@ -67,6 +69,8 @@ type Status struct {
 type ServerService struct {
 	xrayService XrayService
 }
+
+const n6XrayRuntimeSHA256 = "128f9c34811ee74b3770eef7010d011e3946e85dfab28f2ed1804e380461b05e"
 
 func (s *ServerService) GetStatus(lastStatus *Status) *Status {
 	now := time.Now()
@@ -174,7 +178,7 @@ func (s *ServerService) downloadXRay(version string) (string, error) {
 	_ = version
 	arch := runtime.GOARCH
 	if arch != "amd64" {
-		return "", fmt.Errorf("current N5 runtime 26.5.3 release only supports amd64/x86_64; arch %s is not included", arch)
+		return "", fmt.Errorf("current n6-ui runtime 26.5.3 release only supports amd64/x86_64; arch %s is not included", arch)
 	}
 	zipName := "Xray-linux-64.zip"
 
@@ -199,7 +203,7 @@ func (s *ServerService) downloadXRay(version string) (string, error) {
 
 	baseURL := strings.TrimRight(os.Getenv("XUI_RELEASES_BASE"), "/")
 	if baseURL == "" {
-		baseURL = "https://github.com/torr9522/n5-ui/releases/download/v0.2.0"
+		baseURL = "https://github.com/torr9522/n6-ui/releases/download/v0.1.0"
 	}
 	url := fmt.Sprintf("%s/%s", baseURL, zipName)
 	resp, err := http.Get(url)
@@ -277,6 +281,14 @@ func (s *ServerService) UpdateXray(version string) error {
 	err = copyZipFile("xray", xray.GetBinaryPath())
 	if err != nil {
 		return err
+	}
+	xrayData, err := os.ReadFile(xray.GetBinaryPath())
+	if err != nil {
+		return err
+	}
+	digest := sha256.Sum256(xrayData)
+	if hex.EncodeToString(digest[:]) != n6XrayRuntimeSHA256 {
+		return fmt.Errorf("xray runtime SHA256 mismatch: got %s", hex.EncodeToString(digest[:]))
 	}
 	err = copyZipFile("geosite.dat", xray.GetGeositePath())
 	if err != nil {

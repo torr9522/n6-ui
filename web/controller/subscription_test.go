@@ -16,9 +16,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"x-ui/database"
-	"x-ui/database/model"
-	"x-ui/web/service"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/web/service"
 )
 
 func subscriptionTestFiles(t *testing.T) []string {

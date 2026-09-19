@@ -1,9 +1,9 @@
 package n5
 
 import (
+	coreservice "github.com/torr9522/n6-ui/web/service"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
 	"strconv"
-	coreservice "x-ui/web/service"
-	n5service "x-ui/web/service/n5"
 
 	"github.com/gin-gonic/gin"
 )

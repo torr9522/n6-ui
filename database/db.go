@@ -3,6 +3,8 @@ package database
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/torr9522/n6-ui/config"
+	"github.com/torr9522/n6-ui/database/model"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -10,8 +12,6 @@ import (
 	"os"
 	"path"
 	"strings"
-	"x-ui/config"
-	"x-ui/database/model"
 )
 
 var db *gorm.DB

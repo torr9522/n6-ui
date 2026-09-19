@@ -1,8 +1,8 @@
 package simple
 
 import (
-	"x-ui/util/common"
-	simpleservice "x-ui/web/service/n5/simple"
+	"github.com/torr9522/n6-ui/util/common"
+	simpleservice "github.com/torr9522/n6-ui/web/service/n5/simple"
 
 	"github.com/gin-gonic/gin"
 )

@@ -1,22 +1,23 @@
-# N5-UI
+# n6-ui
 简体中文|[ENGLISH](./README_EN.md)  
 
-## N5-UI v0.2.0 Stable
+## n6-ui v0.1.0 Stable
 
 本版本已在全新 Debian 11 Bullseye amd64/x86_64 环境完成安装、真实重启、桌面与移动端验证，以及 TCP/UDP、订阅、Access IP 和数据库一致性验证。
 
-正式运行时为 N5-UI 自带的 Xray 26.5.3 amd64：
+正式运行时为 n6-ui 自带的 Xray 26.5.3 amd64：
 
 `128f9c34811ee74b3770eef7010d011e3946e85dfab28f2ed1804e380461b05e`
 
 > 声明：该项目仅供个人学习、交流，请遵守当地法律法规,勿用于非法用途;请勿用于生产环境  
 > 声明：该项目已闭源，介意者请勿使用；如您需要开源代码，请附上您的Github Profile邮箱联系  
 
-N5-UI 是基于 n3-ui 建立的独立二开项目，当前安装与发布源已独立切换到 `torr9522/n5-ui`。  
+n6-ui 是基于 n3-ui 建立的独立二开项目，当前安装与发布源已独立切换到 `torr9522/n6-ui`。
 运行时继续保持对 `x-ui` 生态的兼容：服务名、命令名、路径、数据库、API 与 Xray 调用逻辑均不变。  
+本初始版本继承已验收的 SS2022 单用户能力：`2022-blake3-aes-128-gcm`、`2022-blake3-aes-256-gcm`、`2022-blake3-chacha20-poly1305`。不支持 multi-user、EIH 或 multi-key。
 支持单端口多用户、多协议的 xray 面板，究极缝合怪    
 通过免费的Telegram bot方便快捷地进行监控、管理你的代理服务  
-&#x26A1;`xtls-rprx-vision`与`reality`快速入手请看[这里](https://github.com/torr9522/n5-ui/wiki/%E8%8A%82%E7%82%B9%E9%85%8D%E7%BD%AE)
+&#x26A1;`xtls-rprx-vision`与`reality`快速入手请看[这里](https://github.com/torr9522/n6-ui/wiki/%E8%8A%82%E7%82%B9%E9%85%8D%E7%BD%AE)
 欢迎大家使用并反馈意见或提交Pr,帮助项目更好的改善  
 如果您觉得本项目对您有所帮助,不妨给个star:star2:支持我  
 或者你恰巧有购买服务器的需求,可以通过文末的赞助部分支持我~ 
@@ -44,28 +45,30 @@ N5-UI 是基于 n3-ui 建立的独立二开项目，当前安装与发布源已�
 - 支持 https 访问面板（自备域名 + ssl 证书）
 - 支持一键SSL证书申请且自动续签
 - Telegram bot通知、控制功能
-- N5出口、出口规则、分流规则和自定义规则组
+- n6-ui 出口、出口规则、分流规则和自定义规则组
 - ALL、AI、Game、Streaming 分流
 - 固定路由优先级与规则冲突提示
 - Subscription Lite 与 Access IP
 - 更多高级配置项，详见面板 
 
-:bulb:具体**使用、配置细节以及问题排查**请点击这里:point_right:[WIKI](https://github.com/torr9522/n5-ui/wiki):point_left:
- Specific **Usages、Configurations and Debug** please refer to [WIKI](https://github.com/torr9522/n5-ui/wiki)
+:bulb:具体**使用、配置细节以及问题排查**请点击这里:point_right:[WIKI](https://github.com/torr9522/n6-ui/wiki):point_left:
+ Specific **Usages、Configurations and Debug** please refer to [WIKI](https://github.com/torr9522/n6-ui/wiki)
 # 一键安装
 在安装前请确保你的系统支持`bash`环境,且系统网络正常。当前正式验证环境为 Debian 11 Bullseye amd64/x86_64。源码安装模式会自动补齐 Go 工具链，当前脚本内置版本为 `Go 1.22.7`，最低要求为 `Go 1.16+`。
 
 本版本推荐在全新 Debian 系统上安装。当前版本暂不承诺旧版本原地升级兼容性；如需更换版本，建议先完整备份 `/etc/x-ui`、数据库和重要配置。
 
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/torr9522/n5-ui/v0.2.0/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/torr9522/n6-ui/v0.1.0/install.sh)
 ```    
 For English Users,please use the following command to install English supported version:  
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/torr9522/n5-ui/v0.2.0/install_en.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/torr9522/n6-ui/v0.1.0/install_en.sh)
 ```
 
 当前 Stable Runtime 仅正式支持 amd64/x86_64。ARM64 源码可能包含兼容代码，但本版本不提供 ARM64 Stable Runtime 承诺。
+
+正式安装包与 Xray runtime 均由 `torr9522/n6-ui` 自己托管；运行时不会回退到母版仓库或其它 panel 仓库。
 
 # 效果预览  
 `面板使用`:  
@@ -238,4 +241,4 @@ VPS推送可关注电报[频道](https://t.me/VpsReStockAlert)
 
 ## Stargazers over time
 
-[![Stargazers over time](https://starchart.cc/torr9522/n5-ui.svg)](https://starchart.cc/torr9522/n5-ui)
+[![Stargazers over time](https://starchart.cc/torr9522/n6-ui.svg)](https://starchart.cc/torr9522/n6-ui)

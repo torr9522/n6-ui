@@ -2,12 +2,12 @@ package n5
 
 import (
 	"encoding/json"
+	"github.com/torr9522/n6-ui/database"
+	legacyModel "github.com/torr9522/n6-ui/database/model"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/util/json_util"
+	"github.com/torr9522/n6-ui/xray"
 	"testing"
-	"x-ui/database"
-	legacyModel "x-ui/database/model"
-	n5model "x-ui/database/model/n5"
-	"x-ui/util/json_util"
-	"x-ui/xray"
 )
 
 func TestXrayMergeServiceAppendsOutboundsAndRouting(t *testing.T) {

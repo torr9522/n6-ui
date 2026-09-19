@@ -3,8 +3,8 @@ package service
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"x-ui/util/common"
-	"x-ui/xray"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/xray"
 )
 
 type RealityService struct {

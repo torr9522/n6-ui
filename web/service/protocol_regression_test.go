@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"x-ui/util/json_util"
-	ssservice "x-ui/web/service/shadowsocks"
-	"x-ui/xray"
+	"github.com/torr9522/n6-ui/util/json_util"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
+	"github.com/torr9522/n6-ui/xray"
 )
 
 func TestProtocolRegressionFormalXrayConfigMatrix(t *testing.T) {

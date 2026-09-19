@@ -2,10 +2,10 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/torr9522/n6-ui/logger"
+	"github.com/torr9522/n6-ui/web/service"
+	"github.com/torr9522/n6-ui/web/session"
 	"net/http"
-	"x-ui/logger"
-	"x-ui/web/service"
-	"x-ui/web/session"
 )
 
 type LoginForm struct {

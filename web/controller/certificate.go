@@ -2,8 +2,8 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"x-ui/web/entity"
-	"x-ui/web/service"
+	"github.com/torr9522/n6-ui/web/entity"
+	"github.com/torr9522/n6-ui/web/service"
 )
 
 type CertificateController struct {

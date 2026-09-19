@@ -1,10 +1,10 @@
 package service
 
 import (
+	"github.com/torr9522/n6-ui/logger"
 	"os"
 	"syscall"
 	"time"
-	"x-ui/logger"
 )
 
 type PanelService struct {

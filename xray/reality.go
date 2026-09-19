@@ -1,9 +1,9 @@
 package xray
 
 import (
+	"github.com/torr9522/n6-ui/util/common"
 	"os/exec"
 	"strings"
-	"x-ui/util/common"
 )
 
 type X25519KeyPair struct {

@@ -1,8 +1,8 @@
 package n5
 
 import (
-	"x-ui/web/entity"
-	coreservice "x-ui/web/service"
+	"github.com/torr9522/n6-ui/web/entity"
+	coreservice "github.com/torr9522/n6-ui/web/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,7 +39,7 @@ func (a *N5SettingsController) initRouter(g *gin.RouterGroup) {
 }
 
 func (a *N5SettingsController) page(c *gin.Context) {
-	html(c, "settings.html", "N5设置", nil)
+	html(c, "settings.html", "n6-ui 设置", nil)
 }
 
 func (a *N5SettingsController) get(c *gin.Context) {

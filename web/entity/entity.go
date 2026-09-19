@@ -3,11 +3,11 @@ package entity
 import (
 	"crypto/tls"
 	"encoding/json"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/xray"
 	"net"
 	"strings"
 	"time"
-	"x-ui/util/common"
-	"x-ui/xray"
 )
 
 type Msg struct {

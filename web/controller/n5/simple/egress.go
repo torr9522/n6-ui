@@ -1,17 +1,17 @@
 package simple
 
 import (
+	"github.com/torr9522/n6-ui/config"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/web/entity"
+	coreservice "github.com/torr9522/n6-ui/web/service"
+	simpleservice "github.com/torr9522/n6-ui/web/service/n5/simple"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
+	"github.com/torr9522/n6-ui/web/session"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
-	"x-ui/config"
-	"x-ui/util/common"
-	"x-ui/web/entity"
-	coreservice "x-ui/web/service"
-	simpleservice "x-ui/web/service/n5/simple"
-	ssservice "x-ui/web/service/shadowsocks"
-	"x-ui/web/session"
 
 	"github.com/gin-gonic/gin"
 )
@@ -114,7 +114,7 @@ func (a *EgressController) exportShadowsocksShareLink(c *gin.Context) {
 }
 
 func (a *EgressController) page(c *gin.Context) {
-	html(c, "simple.html", "N5出口", nil)
+	html(c, "simple.html", "n6-ui 出口", nil)
 }
 
 func (a *EgressController) editPage(c *gin.Context) {

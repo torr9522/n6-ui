@@ -1,6 +1,6 @@
 package v2ui
 
-import "x-ui/database/model"
+import "github.com/torr9522/n6-ui/database/model"
 
 type V2Inbound struct {
 	Id             int `gorm:"primaryKey;autoIncrement"`

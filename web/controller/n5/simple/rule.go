@@ -1,11 +1,11 @@
 package simple
 
 import (
+	"github.com/torr9522/n6-ui/web/entity"
+	coreservice "github.com/torr9522/n6-ui/web/service"
+	simpleservice "github.com/torr9522/n6-ui/web/service/n5/simple"
 	"net/http"
 	"strconv"
-	"x-ui/web/entity"
-	coreservice "x-ui/web/service"
-	simpleservice "x-ui/web/service/n5/simple"
 
 	"github.com/gin-gonic/gin"
 )

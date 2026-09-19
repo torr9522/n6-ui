@@ -1,9 +1,9 @@
 package service
 
 import (
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
 	"testing"
-	"x-ui/database"
-	"x-ui/database/model"
 )
 
 func TestUpdateAllSettingN5ExtensionPreservesOtherSettingsAndDoesNotDuplicateKey(t *testing.T) {

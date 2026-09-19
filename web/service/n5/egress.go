@@ -3,15 +3,15 @@ package n5
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/torr9522/n6-ui/database"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/util/json_util"
+	"github.com/torr9522/n6-ui/xray"
 	"gorm.io/gorm"
 	"os"
 	"strings"
 	"time"
-	"x-ui/database"
-	n5model "x-ui/database/model/n5"
-	"x-ui/util/common"
-	"x-ui/util/json_util"
-	"x-ui/xray"
 )
 
 type EgressService struct {

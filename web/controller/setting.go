@@ -3,10 +3,10 @@ package controller
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
+	"github.com/torr9522/n6-ui/web/entity"
+	"github.com/torr9522/n6-ui/web/service"
+	"github.com/torr9522/n6-ui/web/session"
 	"time"
-	"x-ui/web/entity"
-	"x-ui/web/service"
-	"x-ui/web/session"
 )
 
 type updateUserForm struct {

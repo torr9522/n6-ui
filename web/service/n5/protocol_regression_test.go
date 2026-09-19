@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"x-ui/database"
-	n5model "x-ui/database/model/n5"
-	ssservice "x-ui/web/service/shadowsocks"
+	"github.com/torr9522/n6-ui/database"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 )
 
 func startRegressionXray(t *testing.T, binaryPath string, config string) *bytes.Buffer {

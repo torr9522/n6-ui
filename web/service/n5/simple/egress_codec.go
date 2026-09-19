@@ -3,9 +3,9 @@ package simple
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/torr9522/n6-ui/util/common"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 	"strings"
-	"x-ui/util/common"
-	ssservice "x-ui/web/service/shadowsocks"
 )
 
 const simpleAdvancedConfigMessage = "该出口包含高级配置，请使用高级出口编辑"

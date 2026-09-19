@@ -2,10 +2,10 @@ package n5
 
 import (
 	"github.com/gin-gonic/gin"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	coreservice "github.com/torr9522/n6-ui/web/service"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
 	"strconv"
-	n5model "x-ui/database/model/n5"
-	coreservice "x-ui/web/service"
-	n5service "x-ui/web/service/n5"
 )
 
 type PoolController struct {

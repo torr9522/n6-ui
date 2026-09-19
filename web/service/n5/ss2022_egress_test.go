@@ -13,8 +13,8 @@ import (
 	"testing"
 	"time"
 
-	n5model "x-ui/database/model/n5"
-	ssservice "x-ui/web/service/shadowsocks"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 )
 
 func ss2022OutboundJSON(method string, key string, address string, port int) string {

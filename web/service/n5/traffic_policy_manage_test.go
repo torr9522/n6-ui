@@ -1,11 +1,11 @@
 package n5
 
 import (
+	"github.com/torr9522/n6-ui/database"
+	legacyModel "github.com/torr9522/n6-ui/database/model"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
 	"strings"
 	"testing"
-	"x-ui/database"
-	legacyModel "x-ui/database/model"
-	n5model "x-ui/database/model/n5"
 )
 
 func createTrafficTestInbound(t *testing.T, port int, tag string) *legacyModel.Inbound {

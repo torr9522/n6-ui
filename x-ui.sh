@@ -5,7 +5,7 @@ green='\033[0;32m'
 yellow='\033[0;33m'
 plain='\033[0m'
 
-XUI_RAW_BASE="${XUI_RAW_BASE:-https://raw.githubusercontent.com/torr9522/n5-ui/v0.2.0}"
+XUI_RAW_BASE="${XUI_RAW_BASE:-https://raw.githubusercontent.com/torr9522/n6-ui/v0.1.0}"
 XUI_LOCAL_INSTALL_SCRIPT="/usr/local/x-ui/install.sh"
 XUI_LOCAL_SHELL_SCRIPT="/usr/local/x-ui/x-ui.sh"
 XUI_BBR_URL="${XUI_BBR_URL:-${XUI_RAW_BASE}/scripts/bbr.sh}"

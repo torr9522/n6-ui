@@ -2,9 +2,9 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/torr9522/n6-ui/web/global"
+	"github.com/torr9522/n6-ui/web/service"
 	"time"
-	"x-ui/web/global"
-	"x-ui/web/service"
 )
 
 type ServerController struct {

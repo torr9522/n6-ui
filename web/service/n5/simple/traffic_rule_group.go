@@ -1,14 +1,14 @@
 package simple
 
 import (
+	"github.com/torr9522/n6-ui/database"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/util/common"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
+	n5templates "github.com/torr9522/n6-ui/web/service/n5/templates"
 	"net/url"
 	"strconv"
 	"strings"
-	"x-ui/database"
-	n5model "x-ui/database/model/n5"
-	"x-ui/util/common"
-	n5service "x-ui/web/service/n5"
-	n5templates "x-ui/web/service/n5/templates"
 )
 
 const (

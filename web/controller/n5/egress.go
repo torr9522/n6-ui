@@ -2,17 +2,17 @@ package n5
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/torr9522/n6-ui/config"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/logger"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/web/entity"
+	coreservice "github.com/torr9522/n6-ui/web/service"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
+	"github.com/torr9522/n6-ui/web/session"
 	"net/http"
 	"strconv"
 	"strings"
-	"x-ui/config"
-	n5model "x-ui/database/model/n5"
-	"x-ui/logger"
-	"x-ui/util/common"
-	"x-ui/web/entity"
-	coreservice "x-ui/web/service"
-	n5service "x-ui/web/service/n5"
-	"x-ui/web/session"
 )
 
 type EgressController struct {

@@ -2,12 +2,12 @@ package simple
 
 import (
 	"encoding/json"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/util/common"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 	"strconv"
 	"strings"
-	n5model "x-ui/database/model/n5"
-	"x-ui/util/common"
-	n5service "x-ui/web/service/n5"
-	ssservice "x-ui/web/service/shadowsocks"
 )
 
 type egressManager interface {

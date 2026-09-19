@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	n5service "x-ui/web/service/n5"
-	ssservice "x-ui/web/service/shadowsocks"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 )
 
 func TestSimpleEgressShadowsocksShareRoundTrip(t *testing.T) {

@@ -3,11 +3,11 @@ package n5
 import (
 	"encoding/base64"
 	"encoding/json"
+	"github.com/torr9522/n6-ui/database"
+	legacyModel "github.com/torr9522/n6-ui/database/model"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
 	"sort"
 	"strings"
-	"x-ui/database"
-	legacyModel "x-ui/database/model"
-	n5model "x-ui/database/model/n5"
 )
 
 type XrayExtService struct {

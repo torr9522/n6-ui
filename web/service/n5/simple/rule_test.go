@@ -4,14 +4,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
 	"sort"
 	"strconv"
 	"strings"
 	"testing"
-	"x-ui/database"
-	"x-ui/database/model"
-	n5model "x-ui/database/model/n5"
-	n5service "x-ui/web/service/n5"
 )
 
 func TestSimpleRuleServiceAllAndAICanCoexist(t *testing.T) {

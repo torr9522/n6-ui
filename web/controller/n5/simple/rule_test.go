@@ -2,13 +2,13 @@ package simple
 
 import (
 	"bytes"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/web/entity"
+	simpleservice "github.com/torr9522/n6-ui/web/service/n5/simple"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"x-ui/database/model"
-	"x-ui/web/entity"
-	simpleservice "x-ui/web/service/n5/simple"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"

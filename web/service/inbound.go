@@ -3,16 +3,16 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/util/common"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
+	"github.com/torr9522/n6-ui/xray"
 	"gorm.io/gorm"
 	"regexp"
 	"strings"
 	"time"
-	"x-ui/database"
-	"x-ui/database/model"
-	n5model "x-ui/database/model/n5"
-	"x-ui/util/common"
-	ssservice "x-ui/web/service/shadowsocks"
-	"x-ui/xray"
 )
 
 type InboundService struct {

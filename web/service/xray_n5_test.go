@@ -2,13 +2,13 @@ package service
 
 import (
 	"encoding/json"
+	"github.com/torr9522/n6-ui/database"
+	legacyModel "github.com/torr9522/n6-ui/database/model"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
 	"path/filepath"
 	"strings"
 	"testing"
-	"x-ui/database"
-	legacyModel "x-ui/database/model"
-	n5model "x-ui/database/model/n5"
-	n5service "x-ui/web/service/n5"
 )
 
 func initServiceTestDB(t *testing.T) {

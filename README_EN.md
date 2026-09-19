@@ -1,23 +1,24 @@
-# N5-UI
+# n6-ui
 
 [简体中文](./README.md)| ENGLISH  
 
-## N5-UI v0.2.0 Stable
+## n6-ui v0.1.0 Stable
 
 This release was validated on a fresh Debian 11 Bullseye amd64/x86_64 system, including installation, real reboot, desktop and mobile browser checks, TCP/UDP, subscriptions, Access IP, and database consistency.
 
-The official runtime is the bundled N5-UI Xray 26.5.3 amd64 binary.
+The official runtime is the bundled n6-ui Xray 26.5.3 amd64 binary.
 SHA256: `128f9c34811ee74b3770eef7010d011e3946e85dfab28f2ed1804e380461b05e`
 
-N5-UI is an independent fork based on n3-ui, and its install/release source is now fully served from `torr9522/n5-ui`.  
+n6-ui is an independent fork based on n3-ui, and its install/release source is now fully served from `torr9522/n6-ui`.
 Runtime compatibility with the `x-ui` ecosystem is intentionally preserved: service name, command name, paths, database, API, and Xray invocation logic remain unchanged.  
-N5-UI is a webUI panel based on Xray-core which supports multi protocols and multi users  
+n6-ui includes the validated SS2022 single-user methods `2022-blake3-aes-128-gcm`, `2022-blake3-aes-256-gcm`, and `2022-blake3-chacha20-poly1305`. Multi-user, EIH, and multi-key modes are out of scope.
+n6-ui is a webUI panel based on Xray-core which supports multi protocols and multi users
 This project is a fork of [vaxilu&#39;s project](https://github.com/vaxilu/x-ui),and it is a experiental project which used by myself for learning golang   
 If you need more language options ,please open a issue and let me know that
 
 ## Branding Notes
 
-- Project brand: `n5-ui`
+- Project brand: `n6-ui`
 - Runtime identity: `x-ui` compatible
 - Install command, binary name, service name, API path, and database layout are unchanged in this phase
 
@@ -28,7 +29,7 @@ If you need more language options ,please open a issue and let me know that
 - [Public development history](./docs/history/README.md)
 
 # Changes   
-- 2026.08.08：Create the independent `n5-ui` project and finish phase-1 branding migration while keeping `x-ui` runtime compatibility intact  
+- 2026.08.08：Create the independent `n6-ui` project and finish phase-1 branding migration while keeping `x-ui` runtime compatibility intact
 - 2023.07.18：Random Reality dest and serverNames;more detailed sniffing settings available  
 - 2023.06.10：Enable TLS will reuse panel's certs and domain;add setting for ocspStapling;refactor device limit  
 - 2023.04.09：Support REALITY for now  
@@ -68,7 +69,7 @@ If you need more language options ,please open a issue and let me know that
 - Subscription Lite and Access IP
 - more functions in control menu  
 
-for more detailed usages,plz see [WIKI](https://github.com/torr9522/n5-ui/wiki)
+for more detailed usages,plz see [WIKI](https://github.com/torr9522/n6-ui/wiki)
 
 # Installation
 Make sure your system `bash`, `curl`, and network are ready. The validated environment is Debian 11 Bullseye amd64/x86_64. Source installs will auto-install the Go toolchain when needed. The current embedded version is `Go 1.22.7`, with a minimum requirement of `Go 1.16+`.
@@ -76,14 +77,16 @@ Make sure your system `bash`, `curl`, and network are ready. The validated envir
 Clean Install is recommended. In-place upgrade compatibility is not claimed or guaranteed for this release. Before changing versions, back up `/etc/x-ui`, the database, and important configuration.
 
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/torr9522/n5-ui/v0.2.0/install.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/torr9522/n6-ui/v0.1.0/install.sh)
 ```  
 For English Users,please use the following command to install English supported version:  
 ```
-bash <(curl -Ls https://raw.githubusercontent.com/torr9522/n5-ui/v0.2.0/install_en.sh)
+bash <(curl -Ls https://raw.githubusercontent.com/torr9522/n6-ui/v0.1.0/install_en.sh)
 ``` 
 
 The official Stable Runtime is supported on amd64/x86_64 only. ARM64 source compatibility is not an ARM64 Stable Runtime commitment.
+
+Application packages and the Xray runtime are hosted by `torr9522/n6-ui`; runtime and update paths do not fall back to the parent repository or another panel repository.
 
 ## Shortcut  
 After Installation，you can input `x-ui`to enter control menu，current menu details：
@@ -148,4 +151,4 @@ if you want to purchase some virtual servers,you can purchase by my aff link:
 
 ## Stargazers over time
 
-[![Stargazers over time](https://starchart.cc/torr9522/n5-ui.svg)](https://starchart.cc/torr9522/n5-ui)
+[![Stargazers over time](https://starchart.cc/torr9522/n6-ui.svg)](https://starchart.cc/torr9522/n6-ui)

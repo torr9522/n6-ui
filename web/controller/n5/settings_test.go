@@ -2,12 +2,12 @@ package n5
 
 import (
 	"bytes"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/web/entity"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"x-ui/database/model"
-	"x-ui/web/entity"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"

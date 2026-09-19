@@ -6,19 +6,19 @@
     {{ template "commonSider" . }}
     <a-layout id="content-layout">
         <a-layout-content style="margin: 24px 16px;">
-            <a-card title="N5 分流状态" style="margin-bottom: 16px;">
+            <a-card title="n6-ui 分流状态" style="margin-bottom: 16px;">
                 <a-row type="flex" justify="space-between" align="middle">
                     <a-col>
                         <a-tag :color="n5Enabled ? 'green' : 'default'">
                             [[ n5Enabled ? 'enabled' : 'disabled' ]]
                         </a-tag>
                         <span style="color: rgba(0, 0, 0, 0.45);">
-                            当前状态由 N5设置中的“启用 N5 Xray 扩展”控制。
+                            当前状态由 n6-ui 设置中的“启用 n6-ui Xray 扩展”控制。
                         </span>
                     </a-col>
                     <a-col>
                         <a-button type="primary" @click="openN5Settings">
-                            打开 N5设置
+                            打开 n6-ui 设置
                         </a-button>
                     </a-col>
                 </a-row>
@@ -368,7 +368,7 @@
                     return;
                 }
                 this.n5Enabled = !!(msg.obj && msg.obj.enabled);
-                this.$message.success('N5 分流状态已更新，等待自动应用');
+                this.$message.success('n6-ui 分流状态已更新，等待自动应用');
             },
             openSimpleEgress() {
                 location.href = `${basePath}n5/simple`;

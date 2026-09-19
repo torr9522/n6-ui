@@ -3,6 +3,11 @@ package n5
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	coreservice "github.com/torr9522/n6-ui/web/service"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
 	"html/template"
 	"net/http"
 	"net/http/httptest"
@@ -10,11 +15,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"testing"
-	"x-ui/database"
-	"x-ui/database/model"
-	n5model "x-ui/database/model/n5"
-	coreservice "x-ui/web/service"
-	n5service "x-ui/web/service/n5"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"

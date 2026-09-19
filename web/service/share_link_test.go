@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/torr9522/n6-ui/database/model"
 	"gopkg.in/yaml.v2"
-	"x-ui/database/model"
 )
 
 func TestShareLinkServiceProtocolMatrixAndRealitySafety(t *testing.T) {

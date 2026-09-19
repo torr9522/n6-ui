@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/torr9522/n6-ui/database/model"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 	"gopkg.in/yaml.v2"
-	"x-ui/database/model"
-	ssservice "x-ui/web/service/shadowsocks"
 )
 
 func createShadowsocks2022SubscriptionInbound(t *testing.T, port int, remark string, method string, network string) (*model.Inbound, string) {

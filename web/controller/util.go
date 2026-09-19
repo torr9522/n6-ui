@@ -2,13 +2,13 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/torr9522/n6-ui/config"
+	"github.com/torr9522/n6-ui/logger"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/web/entity"
 	"net"
 	"net/http"
 	"strings"
-	"x-ui/config"
-	"x-ui/logger"
-	"x-ui/util/common"
-	"x-ui/web/entity"
 )
 
 func getUriId(c *gin.Context) int64 {

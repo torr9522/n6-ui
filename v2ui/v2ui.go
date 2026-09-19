@@ -2,11 +2,11 @@ package v2ui
 
 import (
 	"fmt"
-	"x-ui/config"
-	"x-ui/database"
-	"x-ui/database/model"
-	"x-ui/util/common"
-	"x-ui/web/service"
+	"github.com/torr9522/n6-ui/config"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/web/service"
 )
 
 func MigrateFromV2UI(dbPath string) error {

@@ -4,6 +4,10 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/util/common"
+	"github.com/torr9522/n6-ui/xray"
 	"gorm.io/gorm"
 	"io"
 	"net"
@@ -14,10 +18,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"x-ui/database"
-	"x-ui/database/model"
-	"x-ui/util/common"
-	"x-ui/xray"
 )
 
 const (

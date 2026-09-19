@@ -4,10 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"github.com/torr9522/n6-ui/database"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/xray"
 	"strings"
-	"x-ui/database"
-	n5model "x-ui/database/model/n5"
-	"x-ui/xray"
 )
 
 const (

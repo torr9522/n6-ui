@@ -1,8 +1,8 @@
 package job
 
 import (
-	"x-ui/logger"
-	"x-ui/web/service"
+	"github.com/torr9522/n6-ui/logger"
+	"github.com/torr9522/n6-ui/web/service"
 )
 
 type CheckInboundJob struct {

@@ -1,10 +1,10 @@
 package n5
 
 import (
+	"github.com/torr9522/n6-ui/database"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/util/common"
 	"strings"
-	"x-ui/database"
-	n5model "x-ui/database/model/n5"
-	"x-ui/util/common"
 
 	"gorm.io/gorm"
 )

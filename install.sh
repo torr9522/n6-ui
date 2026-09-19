@@ -7,13 +7,14 @@ plain='\033[0m'
 
 cur_dir=$(pwd)
 INSTALL_SCRIPT_DIR=""
-XUI_RAW_BASE="${XUI_RAW_BASE:-https://raw.githubusercontent.com/torr9522/n5-ui/v0.2.0}"
-XUI_REPO_URL="${XUI_REPO_URL:-https://github.com/torr9522/n5-ui.git}"
-XUI_REPO_BRANCH="${XUI_REPO_BRANCH:-v0.2.0}"
+XUI_RAW_BASE="${XUI_RAW_BASE:-https://raw.githubusercontent.com/torr9522/n6-ui/v0.1.0}"
+XUI_REPO_URL="${XUI_REPO_URL:-https://github.com/torr9522/n6-ui.git}"
+XUI_REPO_BRANCH="${XUI_REPO_BRANCH:-main}"
 INSTALL_MODE="${INSTALL_MODE:-source}"
-XUI_RELEASE_TAG="${XUI_RELEASE_TAG:-v0.2.0}"
-XUI_RELEASES_BASE="${XUI_RELEASES_BASE:-${XUI_RELEASES_RAW_BASE:-https://github.com/torr9522/n5-ui/releases/download/${XUI_RELEASE_TAG}}}"
+XUI_RELEASE_TAG="${XUI_RELEASE_TAG:-v0.1.0}"
+XUI_RELEASES_BASE="${XUI_RELEASES_BASE:-${XUI_RELEASES_RAW_BASE:-https://github.com/torr9522/n6-ui/releases/download/${XUI_RELEASE_TAG}}}"
 XUI_XRAY_VERSION="${XUI_XRAY_VERSION:-26.5.3}"
+XUI_XRAY_SHA256="${XUI_XRAY_SHA256:-128f9c34811ee74b3770eef7010d011e3946e85dfab28f2ed1804e380461b05e}"
 
 resolve_install_script_dir() {
     local script_source="${BASH_SOURCE[0]:-$0}"
@@ -121,7 +122,7 @@ sync_default_xray_assets() {
     )
 
     if [[ "${arch}" != "amd64" ]]; then
-        error_exit "当前 N5 runtime 26.5.3 正式切换暂仅支持 amd64/x86_64；arm64 暂未纳入本次发布。"
+        error_exit "当前 n6-ui runtime 26.5.3 正式切换暂仅支持 amd64/x86_64；arm64 暂未纳入本次发布。"
     fi
 
     command -v unzip >/dev/null 2>&1 || error_exit "未找到 unzip，无法同步默认 xray 版本。"
@@ -131,16 +132,16 @@ sync_default_xray_assets() {
     rm -f "${xray_zip}"
     for candidate in "${local_candidates[@]}"; do
         if [[ -f "${candidate}" ]]; then
-            echo -e "${green}使用 N5-UI 固定 Runtime 资源包: ${candidate}${plain}"
+        echo -e "${green}使用 n6-ui 固定 Runtime 资源包: ${candidate}${plain}"
             cp -f "${candidate}" "${xray_zip}"
             break
         fi
     done
 
     if [[ ! -f "${xray_zip}" ]]; then
-        echo -e "${yellow}下载 N5-UI 固定 Runtime 资源包: ${xray_url}${plain}"
+        echo -e "${yellow}下载 n6-ui 固定 Runtime 资源包: ${xray_url}${plain}"
         if ! download_file "${xray_zip}" "${xray_url}"; then
-            echo -e "${red}下载 N5-UI Runtime 资源包失败：${xray_url}${plain}"
+            echo -e "${red}下载 n6-ui Runtime 资源包失败：${xray_url}${plain}"
             return 1
         fi
     fi
@@ -155,6 +156,12 @@ sync_default_xray_assets() {
     if ! unzip -p "${xray_zip}" xray > "/usr/local/x-ui/bin/xray-linux-${arch}"; then
         echo -e "${red}提取 xray 主程序失败${plain}"
         rm -f "${xray_zip}"
+        return 1
+    fi
+    local actual_xray_sha256
+    actual_xray_sha256="$(sha256sum "/usr/local/x-ui/bin/xray-linux-${arch}" | awk '{print $1}')"
+    if [[ "${actual_xray_sha256}" != "${XUI_XRAY_SHA256}" ]]; then
+        echo -e "${red}xray SHA256 校验失败：期望 ${XUI_XRAY_SHA256}，实际 ${actual_xray_sha256}${plain}"
         return 1
     fi
     if ! unzip -p "${xray_zip}" geoip.dat > /usr/local/x-ui/bin/geoip.dat; then
@@ -199,7 +206,7 @@ arch=$(arch)
 if [[ $arch == "x86_64" || $arch == "x64" || $arch == "amd64" ]]; then
     arch="amd64"
 elif [[ $arch == "aarch64" || $arch == "arm64" ]]; then
-    error_exit "当前 N5 runtime 26.5.3 正式切换暂仅支持 amd64/x86_64；arm64 暂未纳入本次发布。"
+    error_exit "当前 n6-ui runtime 26.5.3 正式切换暂仅支持 amd64/x86_64；arm64 暂未纳入本次发布。"
 else
     error_exit "不支持的系统架构: ${arch}，当前仅支持 amd64 / x86_64。"
 fi
@@ -585,18 +592,18 @@ install_x-ui() {
     elif [[ "${INSTALL_MODE}" == "source" ]]; then
         local build_root
         local source_dir
-        build_root="$(mktemp -d /tmp/n5-ui-build.XXXXXX)"
+        build_root="$(mktemp -d /tmp/n6-ui-build.XXXXXX)"
         source_dir="${build_root}/repo"
         echo -e "install source: ${XUI_REPO_URL} (${XUI_REPO_BRANCH})"
         install_build_toolchain || error_exit "编译依赖安装失败。"
         ensure_go_toolchain || error_exit "Go 工具链安装失败。"
         if ! git clone --depth 1 --branch "${XUI_REPO_BRANCH}" "${XUI_REPO_URL}" "${source_dir}"; then
             rm -rf "${build_root}"
-            error_exit "clone n5-ui 源码失败。"
+            error_exit "clone n6-ui 源码失败。"
         fi
         cd "${source_dir}" || {
             rm -rf "${build_root}"
-            error_exit "无法进入 n5-ui 源码目录。"
+            error_exit "无法进入 n6-ui 源码目录。"
         }
         if ! CGO_ENABLED=1 GO111MODULE=on /usr/local/bin/go build -o x-ui .; then
             rm -rf "${build_root}"
@@ -608,18 +615,18 @@ install_x-ui() {
         }
         if ! cp -a "${source_dir}" /usr/local/x-ui; then
             rm -rf "${build_root}"
-            error_exit "复制 n5-ui 源码到 /usr/local/x-ui 失败。"
+            error_exit "复制 n6-ui 源码到 /usr/local/x-ui 失败。"
         fi
         rm -rf "${build_root}"
     else
         if [[ "${package_arch}" != "amd64" ]]; then
-            error_exit "当前 N5 runtime 26.5.3 正式切换暂仅支持 amd64/x86_64；arm64 暂未纳入本次发布。"
+            error_exit "当前 n6-ui runtime 26.5.3 正式切换暂仅支持 amd64/x86_64；arm64 暂未纳入本次发布。"
         fi
         url="${XUI_PACKAGE_URL:-${XUI_RELEASES_BASE}/x-ui-linux-${package_arch}.tar.gz}"
         package_file="/usr/local/x-ui-linux-${package_arch}.tar.gz"
         echo -e "install source: ${url}"
         if ! download_file "${package_file}" "${url}"; then
-            error_exit "download failed, please check n5-ui release assets"
+            error_exit "download failed, please check n6-ui release assets"
         fi
         if ! tar -tzf "${package_file}" >/dev/null 2>&1; then
             error_exit "下载的 x-ui 安装包损坏：${package_file}"

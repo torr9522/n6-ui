@@ -2,7 +2,7 @@ package controller
 
 import (
 	"github.com/gin-gonic/gin"
-	"x-ui/web/service"
+	"github.com/torr9522/n6-ui/web/service"
 )
 
 type RealityController struct {

@@ -3,13 +3,13 @@ package controller
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/logger"
+	"github.com/torr9522/n6-ui/web/global"
+	"github.com/torr9522/n6-ui/web/service"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
+	"github.com/torr9522/n6-ui/web/session"
 	"strconv"
-	"x-ui/database/model"
-	"x-ui/logger"
-	"x-ui/web/global"
-	"x-ui/web/service"
-	ssservice "x-ui/web/service/shadowsocks"
-	"x-ui/web/session"
 )
 
 type InboundController struct {

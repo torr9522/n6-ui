@@ -4,14 +4,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/util/common"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 	"net"
 	"net/url"
 	"sort"
 	"strconv"
 	"strings"
-	"x-ui/database/model"
-	"x-ui/util/common"
-	ssservice "x-ui/web/service/shadowsocks"
 )
 
 type ShareLinkService struct {

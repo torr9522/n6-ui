@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	n5model "x-ui/database/model/n5"
-	n5service "x-ui/web/service/n5"
-	ssservice "x-ui/web/service/shadowsocks"
+	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 )
 
 func createSS2022RoutingEgress(t *testing.T, name string, method string, port int) *n5model.Egress {

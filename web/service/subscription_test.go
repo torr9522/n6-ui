@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"x-ui/database"
-	"x-ui/database/model"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
 )
 
 func createSubscriptionTestInbound(t *testing.T, inbound *model.Inbound) *model.Inbound {

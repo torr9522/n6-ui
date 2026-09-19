@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Workiva/go-datastructures/queue"
+	"github.com/torr9522/n6-ui/util/common"
 	statsservice "github.com/xtls/xray-core/app/stats/command"
 	"google.golang.org/grpc"
 	"io/fs"
@@ -18,7 +19,6 @@ import (
 	"runtime"
 	"strings"
 	"time"
-	"x-ui/util/common"
 )
 
 var trafficRegex = regexp.MustCompile("(inbound|outbound)>>>([^>]+)>>>traffic>>>(downlink|uplink)")

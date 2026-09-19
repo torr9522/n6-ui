@@ -2,7 +2,7 @@ package n5
 
 import (
 	"github.com/gin-gonic/gin"
-	n5service "x-ui/web/service/n5"
+	n5service "github.com/torr9522/n6-ui/web/service/n5"
 )
 
 type XrayController struct {

@@ -8,9 +8,9 @@ import (
 	"net/url"
 	"strings"
 
-	"x-ui/database"
-	"x-ui/database/model"
-	"x-ui/util/common"
+	"github.com/torr9522/n6-ui/database"
+	"github.com/torr9522/n6-ui/database/model"
+	"github.com/torr9522/n6-ui/util/common"
 )
 
 type SubscriptionService struct {

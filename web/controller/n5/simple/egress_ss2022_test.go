@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	ssservice "x-ui/web/service/shadowsocks"
+	ssservice "github.com/torr9522/n6-ui/web/service/shadowsocks"
 )
 
 func TestGenerateSimpleEgressShadowsocks2022KeyAcceptsJSON(t *testing.T) {
