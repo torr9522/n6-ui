@@ -351,10 +351,10 @@
     function ensureSupportedShareTransport(inbound) {
         const network = (inbound.stream && inbound.stream.network) || 'tcp';
         if (!['tcp', 'ws', 'grpc'].includes(network)) {
-            throw new Error('当前 N5 Simple 出口暂不支持该传输方式');
+            throw new Error('当前 n6-ui Simple 出口暂不支持该传输方式');
         }
         if (network === 'tcp' && inbound.stream.tcp && inbound.stream.tcp.type && inbound.stream.tcp.type !== 'none') {
-            throw new Error('当前 N5 Simple 出口暂不支持该传输方式');
+            throw new Error('当前 n6-ui Simple 出口暂不支持该传输方式');
         }
         return network;
     }
@@ -400,19 +400,19 @@
 
         if (protocol === 'vmess') {
             if (!['none', 'tls'].includes(security)) {
-                throw new Error('当前 N5 Simple VMess 仅支持 none 或 tls');
+                throw new Error('当前 n6-ui Simple VMess 仅支持 none 或 tls');
             }
             next.alterId = Number(inbound.settings.vmesses[0].alterId || 0);
         }
 
         if (protocol === 'vless') {
             if (!['none', 'tls', 'reality'].includes(security)) {
-                throw new Error('当前 N5 Simple VLESS 仅支持 none、tls 或 reality');
+                throw new Error('当前 n6-ui Simple VLESS 仅支持 none、tls 或 reality');
             }
             next.flow = inbound.settings.vlesses[0].flow || '';
             next.encryption = inbound.settings.decryption || 'none';
             if (next.encryption !== 'none') {
-                throw new Error('当前 N5 Simple VLESS 仅支持 encryption=none');
+                throw new Error('当前 n6-ui Simple VLESS 仅支持 encryption=none');
             }
             if (security === 'reality' && !['tcp', 'grpc'].includes(network)) {
                 throw new Error('Reality 分享链接仅支持 tcp 或 grpc 传输');
@@ -461,7 +461,7 @@
             return buildFormFromParsedLink(Inbound.parseVLESSLink(value), 'vless', currentForm);
         }
         if (value.startsWith('trojan://')) {
-            throw new Error('当前 N5 Simple 出口不支持 trojan:// 导入');
+            throw new Error('当前 n6-ui Simple 出口不支持 trojan:// 导入');
         }
         throw new Error('不支持的协议');
     }

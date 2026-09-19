@@ -528,7 +528,7 @@ func TestTrafficPolicyServiceAdvancedMethodsProtectSimpleManagedState(t *testing
 
 	expectSimpleManagedReject := func(name string, err error) {
 		t.Helper()
-		if err == nil || !strings.Contains(err.Error(), "N5 简易出口规则管理") {
+		if err == nil || !strings.Contains(err.Error(), "n6-ui 简易出口规则管理") {
 			t.Fatalf("%s: expected simple-managed rejection, got %v", name, err)
 		}
 	}

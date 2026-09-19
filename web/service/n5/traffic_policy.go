@@ -13,7 +13,7 @@ type TrafficPolicyService struct {
 	db *gorm.DB
 }
 
-const simpleManagedTrafficPolicyMutationMessage = "该策略由 N5 简易出口规则管理，请在“出口规则”页面修改"
+const simpleManagedTrafficPolicyMutationMessage = "该策略由 n6-ui 简易出口规则管理，请在“出口规则”页面修改"
 
 func (s *TrafficPolicyService) WithDB(db *gorm.DB) *TrafficPolicyService {
 	if s == nil {

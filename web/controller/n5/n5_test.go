@@ -302,7 +302,7 @@ func TestTrafficPolicyAPIBlocksSimpleManagedRemarkMutation(t *testing.T) {
 		if resp.Code != http.StatusOK {
 			t.Fatalf("%s: unexpected status: %d", name, resp.Code)
 		}
-		if !bytes.Contains(resp.Body.Bytes(), []byte(`"success":false`)) || !bytes.Contains(resp.Body.Bytes(), []byte(`N5 简易出口规则管理`)) {
+		if !bytes.Contains(resp.Body.Bytes(), []byte(`"success":false`)) || !bytes.Contains(resp.Body.Bytes(), []byte(`n6-ui 简易出口规则管理`)) {
 			t.Fatalf("%s: unexpected blocked response: %s", name, resp.Body.String())
 		}
 		if (&coreservice.XrayService{}).IsNeedRestartAndSetFalse() {

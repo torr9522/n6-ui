@@ -442,7 +442,7 @@ func decodeStreamSettings(decoded *decodedSimpleEgress, protocol string, streamR
 	switch network {
 	case "tcp", "ws", "grpc":
 	default:
-		return markUnsupported(decoded, "当前 N5 Simple 出口暂不支持该传输方式")
+		return markUnsupported(decoded, "当前 n6-ui Simple 出口暂不支持该传输方式")
 	}
 
 	security := strings.TrimSpace(strings.ToLower(stream.Security))
@@ -452,11 +452,11 @@ func decodeStreamSettings(decoded *decodedSimpleEgress, protocol string, streamR
 	switch protocol {
 	case "vmess":
 		if security != "none" && security != "tls" {
-			return markUnsupported(decoded, "当前 N5 Simple VMess 仅支持 none 或 tls")
+			return markUnsupported(decoded, "当前 n6-ui Simple VMess 仅支持 none 或 tls")
 		}
 	case "vless":
 		if security != "none" && security != "tls" && security != "reality" {
-			return markUnsupported(decoded, "当前 N5 Simple VLESS 仅支持 none、tls 或 reality")
+			return markUnsupported(decoded, "当前 n6-ui Simple VLESS 仅支持 none、tls 或 reality")
 		}
 	}
 
@@ -535,7 +535,7 @@ func decodeTCPSettings(decoded *decodedSimpleEgress, raw json.RawMessage) string
 		headerType = "none"
 	}
 	if headerType != "none" {
-		return "当前 N5 Simple 出口暂不支持该传输方式"
+		return "当前 n6-ui Simple 出口暂不支持该传输方式"
 	}
 	return ""
 }
@@ -638,7 +638,7 @@ func buildSimpleStreamSettings(protocol string, req *CreateSimpleEgressRequest) 
 	switch network {
 	case "tcp", "ws", "grpc":
 	default:
-		return nil, common.NewError("当前 N5 Simple 出口暂不支持该传输方式")
+		return nil, common.NewError("当前 n6-ui Simple 出口暂不支持该传输方式")
 	}
 
 	security := strings.TrimSpace(strings.ToLower(req.Security))
