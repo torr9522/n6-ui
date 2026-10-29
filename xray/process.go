@@ -18,6 +18,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -58,7 +59,9 @@ func NewProcess(xrayConfig *Config) *Process {
 }
 
 type process struct {
-	cmd *exec.Cmd
+	cmd     *exec.Cmd
+	stateMu sync.RWMutex
+	running bool
 
 	version string
 	apiPort int
@@ -77,22 +80,21 @@ func newProcess(config *Config) *process {
 }
 
 func (p *process) IsRunning() bool {
-	if p.cmd == nil || p.cmd.Process == nil {
-		return false
-	}
-	if p.cmd.ProcessState == nil {
-		return true
-	}
-	return false
+	p.stateMu.RLock()
+	defer p.stateMu.RUnlock()
+	return p.running
 }
 
 func (p *process) GetErr() error {
+	p.stateMu.RLock()
+	defer p.stateMu.RUnlock()
 	return p.exitErr
 }
 
 func (p *process) GetResult() string {
-	if p.lines.Empty() && p.exitErr != nil {
-		return p.exitErr.Error()
+	exitErr := p.GetErr()
+	if p.lines.Empty() && exitErr != nil {
+		return exitErr.Error()
 	}
 	items, _ := p.lines.TakeUntil(func(item interface{}) bool {
 		return true
@@ -207,7 +209,9 @@ func (p *process) Start() (err error) {
 
 	defer func() {
 		if err != nil {
+			p.stateMu.Lock()
 			p.exitErr = err
+			p.stateMu.Unlock()
 		}
 	}()
 
@@ -277,11 +281,16 @@ func (p *process) Start() (err error) {
 	if err := cmd.Start(); err != nil {
 		return err
 	}
+	p.stateMu.Lock()
+	p.running = true
+	p.exitErr = nil
+	p.stateMu.Unlock()
 	go func() {
 		err := cmd.Wait()
-		if err != nil {
-			p.exitErr = err
-		}
+		p.stateMu.Lock()
+		p.running = false
+		p.exitErr = err
+		p.stateMu.Unlock()
 	}()
 
 	p.refreshVersion()
@@ -289,8 +298,8 @@ func (p *process) Start() (err error) {
 
 	time.Sleep(300 * time.Millisecond)
 	if !p.IsRunning() {
-		if p.exitErr != nil {
-			return p.exitErr
+		if exitErr := p.GetErr(); exitErr != nil {
+			return exitErr
 		}
 		return errors.New("xray exited unexpectedly during startup")
 	}
@@ -299,10 +308,14 @@ func (p *process) Start() (err error) {
 }
 
 func (p *process) Stop() error {
-	if !p.IsRunning() {
+	p.stateMu.RLock()
+	running := p.running
+	cmd := p.cmd
+	p.stateMu.RUnlock()
+	if !running || cmd == nil || cmd.Process == nil {
 		return errors.New("xray is not running")
 	}
-	return p.cmd.Process.Kill()
+	return cmd.Process.Kill()
 }
 
 func (p *process) GetTraffic(reset bool) ([]*Traffic, error) {
