@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -16,6 +17,90 @@ import (
 	logging "github.com/op/go-logging"
 	"gorm.io/gorm"
 )
+
+func TestRestoredHistoricalDatabaseBindingMatrix(t *testing.T) {
+	tests := []struct {
+		name          string
+		validBindings int
+		danglingIDs   []int
+	}{
+		{name: "normal", validBindings: 1},
+		{name: "single_orphan", danglingIDs: []int{999991}},
+		{name: "multi_orphan", danglingIDs: []int{999991, 999992, 999999}},
+		{name: "mixed", validBindings: 2, danglingIDs: []int{999999}},
+		{name: "all_orphan", danglingIDs: []int{4, 6, 999999}},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			dbPath := filepath.Join(t.TempDir(), "restored.db")
+			if err := database.InitDB(dbPath); err != nil {
+				t.Fatalf("initialize fixture database failed: %v", err)
+			}
+			egress, err := (&EgressService{}).Create(&n5model.Egress{
+				Name: "restore-egress", Protocol: "freedom", Enabled: true,
+				OutboundJSON: freedomOutboundJSON(),
+			})
+			if err != nil {
+				t.Fatalf("create restore egress failed: %v", err)
+			}
+			policy, err := (&TrafficPolicyService{}).Create(&n5model.TrafficPolicy{
+				Name: "restore-policy", Enabled: true,
+				DefaultTargetType: targetTypeEgress, DefaultTargetId: egress.Id,
+			})
+			if err != nil {
+				t.Fatalf("create restore policy failed: %v", err)
+			}
+
+			validTags := make(map[string]bool, test.validBindings)
+			for index := 0; index < test.validBindings; index++ {
+				inbound := &legacyModel.Inbound{
+					UserId: 1, Remark: fmt.Sprintf("restore-%d", index), Enable: true,
+					Listen: "127.0.0.1", Port: 36100 + index, Protocol: legacyModel.Socks,
+					Settings:       `{"auth":"noauth","udp":false,"ip":"127.0.0.1"}`,
+					StreamSettings: `{}`, Tag: fmt.Sprintf("restore-inbound-%d", index), Sniffing: `{}`,
+				}
+				if err := database.GetDB().Create(inbound).Error; err != nil {
+					t.Fatalf("create restore inbound failed: %v", err)
+				}
+				if err := database.GetDB().Create(&n5model.TrafficPolicyBinding{
+					InboundId: inbound.Id, PolicyId: policy.Id, Enabled: true,
+				}).Error; err != nil {
+					t.Fatalf("create restore binding failed: %v", err)
+				}
+				validTags[inbound.Tag] = true
+			}
+			for _, inboundID := range test.danglingIDs {
+				addDanglingBinding(t, inboundID, policy.Id)
+			}
+
+			sqlDB, err := database.GetDB().DB()
+			if err != nil {
+				t.Fatalf("get fixture sql database failed: %v", err)
+			}
+			if err := sqlDB.Close(); err != nil {
+				t.Fatalf("close fixture database failed: %v", err)
+			}
+			if err := database.InitDB(dbPath); err != nil {
+				t.Fatalf("open restored database failed: %v", err)
+			}
+
+			routing, err := (&XrayExtService{}).GenerateRoutingFragments()
+			if err != nil {
+				t.Fatalf("generate routing from restored database failed: %v", err)
+			}
+			tags := routingInboundTags(t, routing)
+			if len(tags) != len(validTags) {
+				t.Fatalf("restored routing tag count mismatch: got %#v want %#v", tags, validTags)
+			}
+			for tag := range validTags {
+				if tags[tag] != 1 {
+					t.Fatalf("restored routing lost valid tag %q: %#v", tag, routing)
+				}
+			}
+		})
+	}
+}
 
 func createIntegrityRoutingFixture(t *testing.T, inboundCount int) ([]*legacyModel.Inbound, *n5model.TrafficPolicy) {
 	t.Helper()
