@@ -2,12 +2,64 @@ package service
 
 import (
 	"encoding/base64"
+	"net/url"
 	"strings"
 	"testing"
 
 	"github.com/torr9522/n6-ui/database/model"
 	"gopkg.in/yaml.v2"
 )
+
+func TestRealityBackendUsesFirstNonEmptyServerNameAcrossExports(t *testing.T) {
+	inbound := createVLESSRealityTCPInbound(31005, "reality-history")
+	inbound.StreamSettings = strings.Replace(
+		inbound.StreamSettings,
+		`"serverNames":["reality.example.com"]`,
+		`"serverNames":["   ","www.cloudflare.com"]`,
+		1,
+	)
+
+	for _, address := range []string{"domain.test", "198.51.100.10"} {
+		svc := &ShareLinkService{
+			loadShareAddresses: func() ([]ShareAddress, error) {
+				return []ShareAddress{{Id: "test", Address: address, Enabled: true}}, nil
+			},
+		}
+		links, err := svc.GenerateLinks([]*model.Inbound{inbound}, shareContext{})
+		if err != nil {
+			t.Fatalf("generate reality link for %s failed: %v", address, err)
+		}
+		u, err := url.Parse(links[0])
+		if err != nil {
+			t.Fatalf("parse reality link failed: %v", err)
+		}
+		if got := u.Query().Get("sni"); got != "www.cloudflare.com" {
+			t.Fatalf("unexpected URL SNI for %s: %q", address, got)
+		}
+
+		encoded, err := svc.GenerateBase64([]*model.Inbound{inbound}, shareContext{})
+		if err != nil {
+			t.Fatalf("generate base64 reality subscription failed: %v", err)
+		}
+		decoded, err := base64.StdEncoding.DecodeString(encoded)
+		if err != nil || !strings.Contains(string(decoded), "sni=www.cloudflare.com") {
+			t.Fatalf("unexpected base64 reality subscription: %q, %v", decoded, err)
+		}
+
+		mihomo, err := svc.GenerateMihomo([]*model.Inbound{inbound}, shareContext{})
+		if err != nil {
+			t.Fatalf("generate Mihomo reality subscription failed: %v", err)
+		}
+		var parsed map[string]interface{}
+		if err := yaml.Unmarshal([]byte(mihomo), &parsed); err != nil {
+			t.Fatalf("parse Mihomo YAML failed: %v", err)
+		}
+		proxy := parsed["proxies"].([]interface{})[0].(map[interface{}]interface{})
+		if got := proxy["servername"]; got != "www.cloudflare.com" {
+			t.Fatalf("unexpected Mihomo SNI for %s: %#v", address, got)
+		}
+	}
+}
 
 func TestShareLinkServiceProtocolMatrixAndRealitySafety(t *testing.T) {
 	inbounds := []*model.Inbound{

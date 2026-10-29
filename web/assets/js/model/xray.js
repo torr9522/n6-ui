@@ -90,6 +90,17 @@ const FLOW_CONTROL = {
     VISION: "xtls-rprx-vision",
 };
 
+function firstNonEmpty(values, fallback='') {
+    if (Array.isArray(values)) {
+        for (const value of values) {
+            if (typeof value === 'string' && value.trim() !== '') {
+                return value;
+            }
+        }
+    }
+    return fallback;
+}
+
 Object.freeze(Protocols);
 Object.freeze(VmessMethods);
 Object.freeze(SSMethods);
@@ -1577,13 +1588,13 @@ class Inbound extends XrayCommonClass {
                 throw new Error('Reality 分享仅支持 tcp 或 grpc 传输');
             }
             const reality = this.stream.reality;
-            const serverName = Array.isArray(reality.serverNames) ? reality.serverNames[0] : '';
+            const serverName = firstNonEmpty(reality.serverNames, address);
             const shortId = Array.isArray(reality.shortIds) ? reality.shortIds[0] : '';
             if (ObjectUtil.isEmpty(reality.publicKey)) {
                 throw new Error('Reality publicKey 不能为空，请先生成 X25519 密钥');
             }
             params.set("security", "reality");
-            params.set("sni", serverName || address);
+            params.set("sni", serverName);
             params.set("fp", reality.fingerprint || 'chrome');
             params.set("pbk", reality.publicKey);
             params.set("sid", shortId || '');
