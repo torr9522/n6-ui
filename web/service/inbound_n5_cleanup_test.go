@@ -136,3 +136,49 @@ func TestInboundServiceDeleteCleansOnlyDeletedInboundSimpleState(t *testing.T) {
 	assertInboundCleanupCount(t, "n5_traffic_policy_bindings", "inbound_id = ?", []interface{}{inboundC.Id}, 0)
 	assertInboundCleanupCount(t, "n5_traffic_policies", "id = ?", []interface{}{advancedPolicy.Id}, 1)
 }
+
+func TestInboundServiceDeleteRemovesAllBindingsWithoutTouchingOtherInbound(t *testing.T) {
+	initInboundN5CleanupTestDB(t)
+	inboundA := createInboundCleanupTestInbound(t, "multi-a", 35201)
+	inboundB := createInboundCleanupTestInbound(t, "multi-b", 35202)
+	// Simulate a historical database from before the one-binding-per-inbound index.
+	if err := database.GetDB().Exec("DROP INDEX idx_n5_policy_binding_inbound").Error; err != nil {
+		t.Fatalf("drop fixture index failed: %v", err)
+	}
+
+	for index := 0; index < 3; index++ {
+		policy := &n5model.TrafficPolicy{Name: "multi", Remark: "ordinary-advanced", Enabled: true}
+		if err := database.GetDB().Create(policy).Error; err != nil {
+			t.Fatalf("create policy failed: %v", err)
+		}
+		if err := database.GetDB().Create(&n5model.TrafficPolicyBinding{
+			InboundId: inboundA.Id, PolicyId: policy.Id, Enabled: true,
+		}).Error; err != nil {
+			t.Fatalf("create historical binding failed: %v", err)
+		}
+	}
+	policyB, _ := createInboundCleanupPolicy(t, inboundB.Id, "ordinary-advanced")
+
+	if err := (&InboundService{}).DelInbound(inboundA.Id); err != nil {
+		t.Fatalf("delete inbound failed: %v", err)
+	}
+	assertInboundCleanupCount(t, "n5_traffic_policy_bindings", "inbound_id = ?", []interface{}{inboundA.Id}, 0)
+	assertInboundCleanupCount(t, "n5_traffic_policy_bindings", "inbound_id = ? and policy_id = ?", []interface{}{inboundB.Id, policyB.Id}, 1)
+}
+
+func TestInboundServiceUpdatePreservesBindingAndInboundID(t *testing.T) {
+	initInboundN5CleanupTestDB(t)
+	inbound := createInboundCleanupTestInbound(t, "update", 35301)
+	policy, _ := createInboundCleanupPolicy(t, inbound.Id, "ordinary-advanced")
+	originalID := inbound.Id
+	inbound.Remark = "updated"
+	inbound.Port = 35302
+
+	if err := (&InboundService{}).UpdateInbound(inbound); err != nil {
+		t.Fatalf("update inbound failed: %v", err)
+	}
+	if inbound.Id != originalID {
+		t.Fatalf("update changed inbound id: got %d want %d", inbound.Id, originalID)
+	}
+	assertInboundCleanupCount(t, "n5_traffic_policy_bindings", "inbound_id = ? and policy_id = ?", []interface{}{originalID, policy.Id}, 1)
+}

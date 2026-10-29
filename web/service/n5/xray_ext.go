@@ -3,9 +3,12 @@ package n5
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"github.com/torr9522/n6-ui/database"
 	legacyModel "github.com/torr9522/n6-ui/database/model"
 	n5model "github.com/torr9522/n6-ui/database/model/n5"
+	"github.com/torr9522/n6-ui/logger"
+	"gorm.io/gorm"
 	"sort"
 	"strings"
 )
@@ -127,6 +130,10 @@ func (s *XrayExtService) GenerateRoutingFragments() (map[string]interface{}, err
 		}
 		inbound := &legacyModel.Inbound{}
 		if err := db.Model(&legacyModel.Inbound{}).Where("id = ?", binding.InboundId).First(inbound).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				logger.Warningf("skip dangling traffic policy binding: binding_id=%d inbound_id=%d policy_id=%d", binding.Id, binding.InboundId, binding.PolicyId)
+				continue
+			}
 			return nil, err
 		}
 		if inbound.Tag == "" {
